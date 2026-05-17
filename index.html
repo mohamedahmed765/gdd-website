@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compass Studios — GDD Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d0d0f;--bg2:#111115;--bg3:#16161c;--bg4:#1c1c24;--bg5:#22222c;
+  --border:#2a2a38;--border2:#363648;
+  --gold:#c9a84c;--gold2:#e8c97a;--gold3:#f5e0a0;
+  --text:#e8e4d8;--text2:#a8a49a;--text3:#6a6660;
+  --red:#c94c4c;--green:#4c9c6a;--amber:#c98a4c;--blue:#4c7ec9;--purple:#7c4cc9;
+  --sidebar:220px;
+}
+body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow:hidden;height:100vh}
+.app{display:flex;flex-direction:column;height:100vh}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;gap:16px;padding:0 20px;height:52px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.compass-icon{width:28px;height:28px;position:relative}
+.compass-icon svg{width:28px;height:28px}
+.logo-text{font-family:'Cinzel',serif;font-size:15px;font-weight:600;color:var(--gold2);letter-spacing:0.08em}
+.logo-sub{font-size:11px;color:var(--text3);letter-spacing:0.12em;font-family:'Cinzel',serif;font-weight:400}
+.topbar-spacer{flex:1}
+.topbar-user{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)}
+.user-badge{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#0d0d0f;font-family:'Cinzel',serif}
+.btn{padding:6px 14px;border-radius:4px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:'Crimson Pro',serif;font-size:13px;cursor:pointer;transition:all 0.15s}
+.btn:hover{border-color:var(--gold);color:var(--gold)}
+.btn-gold{background:var(--gold);color:#0d0d0f;border-color:var(--gold);font-weight:500}
+.btn-gold:hover{background:var(--gold2);border-color:var(--gold2);color:#0d0d0f}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-danger{border-color:var(--red);color:var(--red)}
+.btn-danger:hover{background:var(--red);color:#fff}
+
+/* MAIN LAYOUT */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.sidebar-section{padding:12px 0}
+.sidebar-section+.sidebar-section{border-top:1px solid var(--border)}
+.sidebar-label{font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.18em;color:var(--text3);padding:0 14px 6px;font-weight:600}
+.sidebar-item{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;font-size:13px;color:var(--text2);transition:all 0.12s;position:relative;user-select:none;border-left:2px solid transparent}
+.sidebar-item:hover{background:var(--bg3);color:var(--text)}
+.sidebar-item.active{background:var(--bg4);color:var(--gold2);border-left-color:var(--gold)}
+.sidebar-item svg{width:14px;height:14px;flex-shrink:0;opacity:0.7}
+.sidebar-item.active svg{opacity:1}
+.page-del{display:none;margin-left:auto;padding:1px 4px;font-size:11px;border-radius:2px;color:var(--text3);background:none;border:none;cursor:pointer}
+.sidebar-item:hover .page-del{display:block}
+.page-del:hover{color:var(--red)}
+.add-page-btn{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;font-size:12px;color:var(--text3);transition:all 0.12s;border:none;background:transparent;width:100%;text-align:left;font-family:'Crimson Pro',serif}
+.add-page-btn:hover{color:var(--gold);background:var(--bg3)}
+.sidebar-scroll{flex:1;overflow-y:auto;overflow-x:hidden}
+.sidebar-scroll::-webkit-scrollbar{width:3px}
+.sidebar-scroll::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;background:var(--bg)}
+.content::-webkit-scrollbar{width:6px}
+.content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* PAGE EDITOR */
+.page-editor{max-width:860px;margin:0 auto;padding:40px 40px 120px}
+.page-title-input{font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:var(--gold2);background:transparent;border:none;outline:none;width:100%;margin-bottom:6px;letter-spacing:0.04em}
+.page-title-input::placeholder{color:var(--text3)}
+.page-meta{font-size:12px;color:var(--text3);margin-bottom:28px;border-bottom:1px solid var(--border);padding-bottom:12px;display:flex;align-items:center;gap:12px}
+
+/* BLOCKS */
+.blocks{display:flex;flex-direction:column;gap:12px}
+.block{position:relative;border-radius:4px;border:1px solid transparent;transition:border-color 0.12s}
+.block:hover{border-color:var(--border)}
+.block-toolbar{display:none;position:absolute;top:-1px;right:0;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 4px;gap:4px;z-index:10;align-items:center}
+.block:hover .block-toolbar{display:flex}
+.block-btn{background:transparent;border:none;cursor:pointer;padding:3px 5px;color:var(--text3);font-size:11px;border-radius:2px;font-family:'Crimson Pro',serif}
+.block-btn:hover{background:var(--bg4);color:var(--gold)}
+.block-btn.del:hover{color:var(--red)}
+
+/* TEXT BLOCK */
+.text-block textarea{width:100%;background:transparent;border:none;outline:none;resize:none;font-family:'Crimson Pro',serif;font-size:16px;color:var(--text);line-height:1.8;min-height:40px;padding:8px 10px}
+.text-block textarea::placeholder{color:var(--text3)}
+
+/* HEADING BLOCK */
+.heading-block input{width:100%;background:transparent;border:none;outline:none;font-family:'Cinzel',serif;font-weight:600;color:var(--gold3);padding:8px 10px;letter-spacing:0.04em}
+.heading-block.h1 input{font-size:22px}
+.heading-block.h2 input{font-size:17px;color:var(--gold2)}
+.heading-block.h3 input{font-size:14px;color:var(--text2);font-family:'Crimson Pro',serif;font-weight:500;letter-spacing:0.08em;text-transform:uppercase}
+.heading-block.h2::before{content:'';display:block;width:100%;height:1px;background:linear-gradient(to right,var(--gold),transparent);margin-bottom:6px;opacity:0.3}
+
+/* TABLE BLOCK */
+.table-block{overflow-x:auto;padding:8px}
+.block-table{border-collapse:collapse;width:100%;min-width:400px}
+.block-table th{background:var(--bg3);border:1px solid var(--border);padding:8px 12px;text-align:left;font-family:'Cinzel',serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:var(--gold);white-space:nowrap}
+.block-table th input{background:transparent;border:none;outline:none;font-family:'Cinzel',serif;font-size:11px;font-weight:600;color:var(--gold);width:100%;letter-spacing:0.1em}
+.block-table td{border:1px solid var(--border);padding:6px 10px;vertical-align:top}
+.block-table td input,.block-table td textarea{background:transparent;border:none;outline:none;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);width:100%;resize:none;min-height:28px;line-height:1.5}
+.table-controls{display:flex;gap:6px;padding:6px 8px;border-top:1px solid var(--border)}
+.table-controls button{font-size:11px;padding:3px 8px}
+
+/* IMAGE BLOCK */
+.image-block{padding:8px}
+.image-drop{border:1px dashed var(--border2);border-radius:4px;padding:30px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--bg2)}
+.image-drop:hover{border-color:var(--gold);background:var(--bg3)}
+.image-drop p{font-size:13px;color:var(--text3)}
+.image-drop .icon{font-size:24px;margin-bottom:6px;opacity:0.4}
+.image-preview{text-align:center}
+.image-preview img{max-width:100%;border-radius:4px;border:1px solid var(--border)}
+.image-caption{margin-top:6px}
+.image-caption input{width:100%;background:transparent;border:none;outline:none;font-family:'Crimson Pro',serif;font-size:13px;color:var(--text3);text-align:center;font-style:italic;padding:4px}
+
+/* ADD BLOCK MENU */
+.add-block-area{margin-top:16px;position:relative}
+.add-block-btn{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px dashed var(--border);border-radius:4px;background:transparent;color:var(--text3);font-family:'Crimson Pro',serif;font-size:13px;cursor:pointer;width:100%;transition:all 0.15s}
+.add-block-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--bg2)}
+.block-menu{position:absolute;bottom:calc(100% + 4px);left:0;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px;min-width:220px;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.6)}
+.block-menu-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:4px;cursor:pointer;color:var(--text2);font-size:13px;transition:all 0.1s}
+.block-menu-item:hover{background:var(--bg4);color:var(--gold)}
+.block-menu-item .bm-icon{font-size:16px;width:20px;text-align:center;color:var(--gold);opacity:0.7}
+.block-menu-item:hover .bm-icon{opacity:1}
+.block-menu-sep{height:1px;background:var(--border);margin:4px 0}
+.block-menu-label{font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.15em;color:var(--text3);padding:4px 10px}
+
+/* PRODUCTION BOARD */
+.production{padding:32px 40px;max-width:1000px;margin:0 auto}
+.prod-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.prod-title{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--gold2)}
+.milestone-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-bottom:10px;overflow:hidden}
+.milestone-header{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;user-select:none}
+.milestone-header:hover{background:var(--bg3)}
+.m-name{font-family:'Cinzel',serif;font-size:13px;font-weight:600;color:var(--gold2);flex:1}
+.m-progress{display:flex;align-items:center;gap:8px}
+.progress-bar{width:80px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:var(--gold);border-radius:2px;transition:width 0.3s}
+.m-pct{font-size:11px;color:var(--text3);min-width:32px}
+.m-status-badge{font-size:10px;padding:2px 8px;border-radius:3px;font-family:'JetBrains Mono',monospace;letter-spacing:0.05em}
+.badge-active{background:rgba(201,168,76,0.12);color:var(--gold);border:1px solid rgba(201,168,76,0.3)}
+.badge-done{background:rgba(76,156,106,0.12);color:var(--green);border:1px solid rgba(76,156,106,0.3)}
+.badge-pending{background:rgba(106,102,96,0.12);color:var(--text3);border:1px solid var(--border)}
+.badge-blocked{background:rgba(201,76,76,0.12);color:var(--red);border:1px solid rgba(201,76,76,0.3)}
+.tasks-container{padding:0 16px 12px;display:flex;flex-direction:column;gap:6px}
+.task-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border-radius:4px;border:1px solid var(--border);font-size:13px}
+.task-name{flex:1;color:var(--text)}
+.task-name input{background:transparent;border:none;outline:none;color:var(--text);font-family:'Crimson Pro',serif;font-size:13px;width:100%}
+.task-assignee{width:90px}
+.task-assignee select{background:var(--bg4);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-size:11px;padding:2px 4px;font-family:'Crimson Pro',serif;outline:none;width:100%}
+.task-status select{background:var(--bg4);border:1px solid var(--border);border-radius:3px;font-size:11px;padding:2px 4px;font-family:'JetBrains Mono',monospace;outline:none;width:80px}
+.task-del{background:transparent;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:2px 4px;border-radius:2px}
+.task-del:hover{color:var(--red)}
+.add-task-row{display:flex;align-items:center;gap:8px;padding:4px 10px}
+.add-task-input{flex:1;background:transparent;border:none;outline:none;color:var(--text3);font-family:'Crimson Pro',serif;font-size:13px}
+.add-task-input::placeholder{color:var(--text3);opacity:0.6}
+.add-milestone-btn{display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px dashed var(--border);border-radius:6px;background:transparent;color:var(--text3);font-family:'Cinzel',serif;font-size:11px;cursor:pointer;width:100%;margin-top:8px;letter-spacing:0.1em;transition:all 0.15s}
+.add-milestone-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+/* KANBAN */
+.kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:16px}
+.kanban-col{background:var(--bg2);border:1px solid var(--border);border-radius:6px;overflow:hidden;min-width:120px}
+.kanban-col-header{padding:10px 12px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;color:var(--text3);display:flex;align-items:center;justify-content:space-between}
+.kanban-cards{padding:8px;display:flex;flex-direction:column;gap:6px;min-height:60px}
+.kanban-card{background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:8px 10px;font-size:12px;color:var(--text);border-left-width:2px}
+.kanban-card.col-todo{border-left-color:var(--text3)}
+.kanban-card.col-inprog{border-left-color:var(--gold)}
+.kanban-card.col-review{border-left-color:var(--blue)}
+.kanban-card.col-done{border-left-color:var(--green)}
+.kanban-card.col-blocked{border-left-color:var(--red)}
+.kc-name{font-family:'Crimson Pro',serif;margin-bottom:3px}
+.kc-meta{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+
+/* AUTH SCREEN */
+.auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);flex-direction:column}
+.auth-box{width:380px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:40px;position:relative}
+.auth-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.5}
+.auth-logo{text-align:center;margin-bottom:32px}
+.auth-title{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--gold2);letter-spacing:0.08em;margin-bottom:4px}
+.auth-sub{font-size:13px;color:var(--text3);font-style:italic}
+.auth-field{margin-bottom:16px}
+.auth-field label{display:block;font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.15em;color:var(--text3);margin-bottom:6px}
+.auth-field input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:9px 12px;color:var(--text);font-family:'Crimson Pro',serif;font-size:15px;outline:none;transition:border-color 0.15s}
+.auth-field input:focus{border-color:var(--gold)}
+.auth-error{color:var(--red);font-size:12px;margin-bottom:12px;text-align:center}
+.auth-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:24px}
+.auth-tab{flex:1;padding:8px;background:transparent;border:none;font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.1em;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s}
+.auth-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* PERMISSIONS */
+.permissions-panel{padding:32px 40px;max-width:700px;margin:0 auto}
+.perm-title{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--gold2);margin-bottom:20px}
+.perm-invite-row{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+.perm-invite-row input{flex:1;min-width:120px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:7px 12px;color:var(--text);font-family:'Crimson Pro',serif;font-size:14px;outline:none}
+.perm-invite-row input:focus{border-color:var(--gold)}
+.perm-invite-row select{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:7px 12px;color:var(--text);font-family:'Crimson Pro',serif;font-size:14px;outline:none}
+.perm-user-list{display:flex;flex-direction:column;gap:8px}
+.perm-user{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;flex-wrap:wrap}
+.perm-user-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:'Cinzel',serif;flex-shrink:0}
+.perm-user-info{flex:1;min-width:120px}
+.perm-user-name{font-size:14px;color:var(--text);font-weight:500}
+.perm-user-role{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:1px}
+.perm-user-badge{font-size:10px;padding:2px 8px;border-radius:3px;font-family:'JetBrains Mono',monospace}
+.perm-badge-owner{background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.4)}
+.perm-badge-editor{background:rgba(76,126,201,0.12);color:var(--blue);border:1px solid rgba(76,126,201,0.3)}
+.perm-badge-viewer{background:rgba(106,102,96,0.12);color:var(--text3);border:1px solid var(--border)}
+
+/* PROD TABS */
+.prod-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px}
+.prod-tab{padding:8px 16px;background:transparent;border:none;font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.1em;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s}
+.prod-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:1000}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:28px;width:400px;position:relative}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.5}
+.modal-title{font-family:'Cinzel',serif;font-size:16px;font-weight:600;color:var(--gold2);margin-bottom:16px}
+.modal-field{margin-bottom:14px}
+.modal-field label{display:block;font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.15em;color:var(--text3);margin-bottom:5px}
+.modal-field input,.modal-field select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:7px 10px;color:var(--text);font-family:'Crimson Pro',serif;font-size:14px;outline:none}
+.modal-field input:focus,.modal-field select:focus{border-color:var(--gold)}
+.modal-actions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end}
+.divider{height:1px;background:var(--border);margin:20px 0}
+.hidden{display:none!important}
+input,textarea,select{font-family:'Crimson Pro',serif}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+const OWNERS = [
+  {id:'owner1',name:'Mohamed',email:'owner1@compass.studio',color:'#c9a84c',initials:'M',role:'owner',title:'Creative Director'},
+  {id:'owner2',name:'Smith Todd',email:'owner2@compass.studio',color:'#4c7ec9',initials:'ST',role:'owner',title:'Game Director'}
+];
+const OWNER_PASSWORDS = {owner1:'compass1',owner2:'compass2'};
+
+const COMPASS_SVG = `<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="16" cy="16" r="13" stroke="#c9a84c" stroke-width="1"/>
+  <circle cx="16" cy="16" r="10" stroke="#c9a84c" stroke-width="0.5" stroke-dasharray="2 2"/>
+  <circle cx="16" cy="16" r="2" fill="#c9a84c"/>
+  <polygon points="16,4 17.2,15 16,14 14.8,15" fill="#c9a84c"/>
+  <polygon points="16,28 14.8,17 16,18 17.2,17" fill="#6a6660"/>
+  <polygon points="4,16 15,14.8 14,16 15,17.2" fill="#6a6660"/>
+  <polygon points="28,16 17,17.2 18,16 17,14.8" fill="#6a6660"/>
+  <text x="16" y="6" text-anchor="middle" fill="#c9a84c" font-size="3.5" font-family="Cinzel,serif">N</text>
+  <text x="16" y="28.5" text-anchor="middle" fill="#6a6660" font-size="3.5" font-family="Cinzel,serif">S</text>
+  <text x="3.5" y="17" text-anchor="middle" fill="#6a6660" font-size="3.5" font-family="Cinzel,serif">W</text>
+  <text x="28.5" y="17" text-anchor="middle" fill="#6a6660" font-size="3.5" font-family="Cinzel,serif">E</text>
+</svg>`;
+
+// ---- STORAGE (localStorage for standalone file) ----
+const STORAGE_KEY = 'compass_gdd_v1';
+function saveData(data){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}catch(e){}}
+function loadData(){try{const d=localStorage.getItem(STORAGE_KEY);return d?JSON.parse(d):null;}catch(e){return null;}}
+
+// ---- DEFAULT STATE ----
+let state = {
+  auth: null,
+  currentView: 'pages',
+  currentPageId: null,
+  pages: [
+    {id:'p1',title:'Game Overview',blocks:[
+      {id:'b1',type:'heading',level:'h1',content:'Game Design Document'},
+      {id:'b2',type:'text',content:'Welcome to the Compass Studios GDD platform. Begin documenting your game design here.\n\nUse the sidebar to navigate between pages, and the + button below to add new content blocks.'},
+      {id:'b3',type:'heading',level:'h2',content:'Vision Statement'},
+      {id:'b4',type:'text',content:'Write your game\'s core vision and pillars here.'}
+    ]},
+    {id:'p2',title:'Characters',blocks:[
+      {id:'b5',type:'heading',level:'h1',content:'Characters'},
+      {id:'b6',type:'table',headers:['Name','Role','Description','Status'],rows:[['','','',''],['','','','']]}
+    ]},
+    {id:'p3',title:'Mechanics',blocks:[
+      {id:'b7',type:'heading',level:'h1',content:'Core Mechanics'},
+      {id:'b8',type:'text',content:'Document your game mechanics here.'}
+    ]}
+  ],
+  milestones: [
+    {id:'m1',title:'Pre-Production',status:'done',tasks:[
+      {id:'t1',name:'Concept Document',assignee:'owner1',status:'done'},
+      {id:'t2',name:'Art Direction',assignee:'owner2',status:'done'},
+      {id:'t3',name:'Technical Scope',assignee:'owner1',status:'done'}
+    ]},
+    {id:'m2',title:'Chapter 1 — Production',status:'active',tasks:[
+      {id:'t4',name:'Crime Scene Prototype',assignee:'owner1',status:'inprog'},
+      {id:'t5',name:'Dialogue System',assignee:'owner1',status:'inprog'},
+      {id:'t6',name:'Character Models',assignee:'owner2',status:'todo'},
+      {id:'t7',name:'Environment Art',assignee:'owner2',status:'todo'},
+      {id:'t8',name:'Cipher Puzzle Mechanics',assignee:'owner1',status:'review'}
+    ]},
+    {id:'m3',title:'Chapter 2 — Planning',status:'pending',tasks:[]}
+  ],
+  users: [
+    {id:'owner1',name:'Mohamed',email:'owner1@compass.studio',role:'owner',color:'#c9a84c',initials:'M',title:'Creative Director'},
+    {id:'owner2',name:'Smith Todd',email:'owner2@compass.studio',role:'owner',color:'#4c7ec9',initials:'ST',title:'Game Director'},
+    {id:'u_ham',name:'Ham',email:'ham@compass.studio',role:'viewer',color:'#4c9c6a',initials:'H',inviteCode:'HAM001',activated:false},
+    {id:'u_jerichoblack',name:'Jerichoblack',email:'jerichoblack@compass.studio',role:'viewer',color:'#c98a4c',initials:'J',inviteCode:'JERI01',activated:false},
+    {id:'u_juen',name:'Juen',email:'juen@compass.studio',role:'viewer',color:'#7c4cc9',initials:'J',inviteCode:'JUEN01',activated:false},
+    {id:'u_beyond',name:'BEYOND',email:'beyond@compass.studio',role:'viewer',color:'#c94c7c',initials:'B',inviteCode:'BEY001',activated:false},
+    {id:'u_melon',name:'Melon',email:'melon@compass.studio',role:'viewer',color:'#7c4cc9',initials:'M',inviteCode:'MEL001',activated:false},
+    {id:'u_its_easle',name:'Its_easle',email:'its_easle@compass.studio',role:'viewer',color:'#4c7ec9',initials:'IE',inviteCode:'ITE001',activated:false},
+    {id:'u_detra',name:'Detra',email:'detra@compass.studio',role:'viewer',color:'#4c9c6a',initials:'D',inviteCode:'DETR01',activated:false},
+    {id:'u_eyes',name:'Eyes on the Moon Studios',email:'eyesonthemoon@compass.studio',role:'viewer',color:'#c98a4c',initials:'EO',inviteCode:'EYES01',activated:false},
+    {id:'u_maschu',name:'Maschu',email:'maschu@compass.studio',role:'viewer',color:'#7c4cc9',initials:'M',inviteCode:'MAS001',activated:false},
+    {id:'u_miles',name:'Miles Lacey',email:'miles.lacey@compass.studio',role:'viewer',color:'#c94c7c',initials:'ML',inviteCode:'MILE01',activated:false},
+    {id:'u_yakootel',name:'YakootEL',email:'yakootel@compass.studio',role:'viewer',color:'#4c7ec9',initials:'Y',inviteCode:'YAK001',activated:false}
+  ],
+  departments: [
+    {name: 'Programming Department', members: ['Ham','Jerichoblack']},
+    {name: 'Artists Department', members: ['Juen','BEYOND','Melon']},
+    {name: 'Writing Department', members: ['Its_easle','Detra']},
+    {name: 'Level Designer', members: ['Detra']},
+    {name: 'Music Department', members: ['Eyes on the Moon Studios','Maschu','Miles Lacey','YakootEL']}
+  ],
+  productionTab: 'milestones',
+  expandedMilestones: {m1:false,m2:true,m3:false},
+  blockMenu: null,
+  modal: null
+};
+
+function save(){
+  saveData({pages:state.pages,milestones:state.milestones,users:state.users,auth:state.auth});
+}
+function load(){
+  const d=loadData();
+  if(d){
+    if(d.pages) state.pages=d.pages;
+    if(d.milestones) state.milestones=d.milestones;
+    if(d.users) state.users=d.users;
+    // ensure owner users always present and sync their current definitions
+    OWNERS.forEach(o=>{
+      const idx=state.users.findIndex(u=>u.id===o.id);
+      if(idx===-1) state.users.unshift({...o});
+      else state.users[idx] = {...state.users[idx], ...o};
+    });
+    if(d.auth){
+      const authUser = state.users.find(u=>u.id===d.auth.id) || state.users.find(u=>u.email===d.auth.email);
+      if(authUser) state.auth = authUser;
+      else state.auth = d.auth;
+    }
+  }
+}
+
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+// ---- RENDER ----
+function render(){
+  const root=document.getElementById('root');
+  if(!state.auth){root.innerHTML=renderAuth();bindAuth();return;}
+  root.innerHTML=renderApp();
+  bindApp();
+}
+
+// ---- AUTH ----
+function renderAuth(){
+  return `<div class="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div style="margin:0 auto 16px;width:56px;height:56px">${COMPASS_SVG.replace('<svg ','<svg width="56" height="56" ')}</div>
+      <div class="auth-title">COMPASS STUDIOS</div>
+      <div class="auth-sub">Game Design Document Platform</div>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Register</button>
+    </div>
+    <div id="login-form">
+      <div class="auth-field"><label>EMAIL</label><input type="email" id="auth-email" placeholder="your@compass.studio" autocomplete="username"/></div>
+      <div class="auth-field"><label>PASSWORD</label><input type="password" id="auth-pass" placeholder="••••••••" autocomplete="current-password"/></div>
+      <div id="auth-error" class="auth-error hidden"></div>
+      <button class="btn btn-gold" style="width:100%;padding:10px;font-size:15px;letter-spacing:0.06em;font-family:Cinzel,serif" onclick="doLogin()">ENTER</button>
+    </div>
+    <div id="register-form" class="hidden">
+      <div class="auth-field"><label>NAME</label><input type="text" id="reg-name" placeholder="Your name"/></div>
+      <div class="auth-field"><label>EMAIL</label><input type="email" id="reg-email" placeholder="your@email.com"/></div>
+      <div class="auth-field"><label>INVITATION CODE</label><input type="text" id="reg-code" placeholder="Enter code to Director"/></div>
+      <div id="reg-error" class="auth-error hidden"></div>
+      <button class="btn btn-gold" style="width:100%;padding:10px;font-size:15px;letter-spacing:0.06em;font-family:Cinzel,serif" onclick="doRegister()">REQUEST ACCESS</button>
+    </div>
+      
+  </div>
+</div>`;
+}
+window.switchAuthTab=(tab)=>{
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-register').classList.toggle('active',tab==='register');
+  document.getElementById('login-form').classList.toggle('hidden',tab!=='login');
+  document.getElementById('register-form').classList.toggle('hidden',tab!=='register');
+};
+window.doLogin=()=>{
+  const email=document.getElementById('auth-email').value.trim().toLowerCase();
+  const pass=document.getElementById('auth-pass').value;
+  const err=document.getElementById('auth-error');
+  const owner=OWNERS.find(o=>o.email===email);
+  if(owner&&OWNER_PASSWORDS[owner.id]===pass){
+    state.auth={...owner};
+    save();
+    if(!state.currentPageId&&state.pages.length)state.currentPageId=state.pages[0].id;
+    render();return;
+  }
+  const u=state.users.find(u=>u.email===email&&u.id!=='owner1'&&u.id!=='owner2');
+  if(u&&u.password===pass){
+    state.auth=u;
+    save();
+    if(!state.currentPageId&&state.pages.length)state.currentPageId=state.pages[0].id;
+    render();return;
+  }
+  err.textContent='Invalid credentials.';err.classList.remove('hidden');
+};
+window.doRegister=()=>{
+  const name=document.getElementById('reg-name').value.trim();
+  const email=document.getElementById('reg-email').value.trim().toLowerCase();
+  const code=document.getElementById('reg-code').value.trim();
+  const err=document.getElementById('reg-error');
+  const invite=state.users.find(u=>u.inviteCode===code&&u.email===email&&!u.activated);
+  if(!invite){err.textContent='Invalid invite code or email.';err.classList.remove('hidden');return;}
+  invite.activated=true;invite.password=code;invite.name=name;
+  state.auth=invite;
+  save();
+  if(!state.currentPageId&&state.pages.length)state.currentPageId=state.pages[0].id;
+  render();
+};
+function bindAuth(){
+  const ep=document.getElementById('auth-pass');
+  const ee=document.getElementById('auth-email');
+  if(ep)ep.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  if(ee)ee.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+}
+
+// ---- APP SHELL ----
+function renderApp(){
+  const page=state.pages.find(p=>p.id===state.currentPageId);
+  return `
+  <div class="app">
+    ${renderTopbar()}
+    <div class="main">
+      ${renderSidebar()}
+      <div class="content" id="content-area">
+        ${state.currentView==='pages'?(page?renderPageEditor(page):renderNoPage()):''}
+        ${state.currentView==='production'?renderProduction():''}
+        ${state.currentView==='permissions'?renderPermissions():''}
+      </div>
+    </div>
+  </div>
+  ${state.modal?renderModal():''}`;
+}
+function renderTopbar(){
+  const u=state.auth;
+  return `<div class="topbar">
+  <div class="logo">
+    <div class="compass-icon">${COMPASS_SVG}</div>
+    <div><div class="logo-text">COMPASS STUDIOS</div><div class="logo-sub">GDD PLATFORM</div></div>
+  </div>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-user">
+    <div class="user-badge" style="background:${u.color||'var(--gold)'}">${u.initials||'?'}</div>
+    <span>${esc(u.name)}</span>
+    <span style="color:var(--text3);font-size:11px;font-family:JetBrains Mono,monospace">${u.role==='owner'?'DIRECTOR':u.role.toUpperCase()}</span>
+    <button class="btn btn-sm" onclick="doLogout()">Sign out</button>
+  </div>
+</div>`;
+}
+window.doLogout=()=>{state.auth=null;save();render();};
+
+function renderSidebar(){
+  const isOwner=state.auth.role==='owner';
+  const canEdit=isOwner||state.auth.role==='editor';
+  return `<div class="sidebar">
+  <div class="sidebar-section" style="padding:8px 0">
+    <div class="sidebar-item ${state.currentView==='pages'&&!state.currentPageId?'active':''}" onclick="setView('pages',null)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Dashboard
+    </div>
+    <div class="sidebar-item ${state.currentView==='production'?'active':''}" onclick="setView('production')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+      Production
+    </div>
+    ${isOwner?`<div class="sidebar-item ${state.currentView==='permissions'?'active':''}" onclick="setView('permissions')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+      Team & Access
+    </div>`:''}
+  </div>
+  <div class="sidebar-section" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+    <div class="sidebar-label">PAGES</div>
+    <div class="sidebar-scroll">
+      ${state.pages.map(p=>`
+      <div class="sidebar-item ${state.currentView==='pages'&&state.currentPageId===p.id?'active':''}" onclick="setView('pages','${p.id}')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.title||'Untitled')}</span>
+        ${canEdit?`<button class="page-del" onclick="deletePage(event,'${p.id}')">✕</button>`:''}
+      </div>`).join('')}
+      ${canEdit?`<button class="add-page-btn" onclick="addPage()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Add page
+      </button>`:''}
+    </div>
+  </div>
+</div>`;
+}
+window.setView=(view,pageId)=>{
+  state.currentView=view;
+  if(pageId!==undefined)state.currentPageId=pageId;
+  if(view==='pages'&&!state.currentPageId&&state.pages.length)state.currentPageId=state.pages[0].id;
+  state.blockMenu=null;render();
+};
+window.addPage=()=>{
+  const id=uid();
+  state.pages.push({id,title:'New Page',blocks:[{id:uid(),type:'heading',level:'h1',content:'New Page'}]});
+  state.currentView='pages';state.currentPageId=id;save();render();
+};
+window.deletePage=(e,id)=>{
+  e.stopPropagation();if(!confirm('Delete this page?'))return;
+  state.pages=state.pages.filter(p=>p.id!==id);
+  if(state.currentPageId===id)state.currentPageId=state.pages[0]?.id||null;
+  save();render();
+};
+
+// ---- PAGE EDITOR ----
+function renderNoPage(){
+  return `<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:16px;color:var(--text3)">
+    <div style="font-family:Cinzel,serif;font-size:22px;color:var(--gold);opacity:0.2">✦</div>
+    <div>Select or create a page to begin</div>
+  </div>`;
+}
+function renderPageEditor(page){
+  const canEdit=state.auth.role==='owner'||state.auth.role==='editor';
+  return `<div class="page-editor">
+  ${canEdit
+    ?`<input class="page-title-input" value="${esc(page.title)}" placeholder="Page Title" oninput="updatePageTitle('${page.id}',this.value)"/>`
+    :`<div style="font-family:Cinzel,serif;font-size:28px;font-weight:700;color:var(--gold2);margin-bottom:6px;letter-spacing:0.04em">${esc(page.title)}</div>`}
+  <div class="page-meta">
+    <span>✦</span><span>Compass Studios GDD</span><span>·</span>
+    <span>${page.blocks.length} block${page.blocks.length!==1?'s':''}</span>
+  </div>
+  <div class="blocks" id="blocks-container">
+    ${page.blocks.map((b,i)=>renderBlock(b,i,page.id,canEdit)).join('')}
+  </div>
+  ${canEdit?`<div class="add-block-area">
+    <button class="add-block-btn" onclick="toggleBlockMenu(event,'${page.id}')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Add block
+    </button>
+    ${state.blockMenu===page.id?renderBlockMenu(page.id):''}
+  </div>`:''}
+</div>`;
+}
+window.updatePageTitle=(id,val)=>{
+  const p=state.pages.find(p=>p.id===id);if(p)p.title=val;save();
+  document.querySelectorAll('.sidebar-item span').forEach(el=>{
+    if(el.dataset.pid===id)el.textContent=val||'Untitled';
+  });
+};
+
+function renderBlock(block,idx,pid,canEdit){
+  const toolbar=canEdit?`<div class="block-toolbar">
+    <button class="block-btn" onclick="moveBlock('${pid}','${block.id}',-1)" title="Move up">↑</button>
+    <button class="block-btn" onclick="moveBlock('${pid}','${block.id}',1)" title="Move down">↓</button>
+    <button class="block-btn del" onclick="deleteBlock('${pid}','${block.id}')" title="Delete">✕</button>
+  </div>`:'';
+  if(block.type==='text')return `<div class="block text-block" id="blk-${block.id}">${toolbar}<textarea ${canEdit?'':'readonly'} oninput="updateBlock('${pid}','${block.id}','content',this.value);autoResize(this)" onblur="save()" placeholder="Write something…">${esc(block.content||'')}</textarea></div>`;
+  if(block.type==='heading')return `<div class="block heading-block ${block.level}" id="blk-${block.id}">${toolbar}<input ${canEdit?'':'readonly'} value="${esc(block.content||'')}" placeholder="${block.level==='h1'?'Title':block.level==='h2'?'Section':'Subsection'}" oninput="updateBlock('${pid}','${block.id}','content',this.value)" onblur="save()"/></div>`;
+  if(block.type==='table')return renderTableBlock(block,pid,canEdit,toolbar);
+  if(block.type==='image')return renderImageBlock(block,pid,canEdit,toolbar);
+  return '';
+}
+function renderTableBlock(block,pid,canEdit,toolbar){
+  const headers=block.headers||['Column 1'];
+  const rows=block.rows||[[]];
+  return `<div class="block table-block" id="blk-${block.id}">${toolbar}
+  <div style="overflow-x:auto">
+  <table class="block-table">
+    <thead><tr>
+      ${headers.map((h,hi)=>`<th><input value="${esc(h)}" ${canEdit?'':'readonly'} placeholder="Column" oninput="updateTableHeader('${pid}','${block.id}',${hi},this.value)" onblur="save()"/></th>`).join('')}
+      ${canEdit?`<th style="width:36px;text-align:center"><button class="block-btn" onclick="addTableCol('${pid}','${block.id}')" title="Add column" style="font-size:14px">+</button></th>`:''}
+    </tr></thead>
+    <tbody>
+      ${rows.map((row,ri)=>`<tr>
+        ${headers.map((_,ci)=>`<td><input value="${esc((row[ci]||''))}" ${canEdit?'':'readonly'} placeholder="—" oninput="updateTableCell('${pid}','${block.id}',${ri},${ci},this.value)" onblur="save()"/></td>`).join('')}
+        ${canEdit?`<td style="text-align:center"><button class="block-btn del" onclick="removeTableRow('${pid}','${block.id}',${ri})" title="Remove row">✕</button></td>`:''}
+      </tr>`).join('')}
+    </tbody>
+  </table>
+  </div>
+  ${canEdit?`<div class="table-controls">
+    <button class="btn btn-sm" onclick="addTableRow('${pid}','${block.id}')">+ Row</button>
+    <button class="btn btn-sm btn-danger" onclick="removeTableCol('${pid}','${block.id}')">− Column</button>
+  </div>`:''}
+</div>`;
+}
+function renderImageBlock(block,pid,canEdit,toolbar){
+  if(block.src)return `<div class="block image-block" id="blk-${block.id}">${toolbar}
+    <div class="image-preview">
+      <img src="${block.src}" alt="${esc(block.caption||'')}"/>
+      <div class="image-caption"><input value="${esc(block.caption||'')}" placeholder="Caption (optional)" ${canEdit?'':'readonly'} oninput="updateBlock('${pid}','${block.id}','caption',this.value)" onblur="save()"/></div>
+      ${canEdit?`<button class="btn btn-sm btn-danger" style="margin-top:8px" onclick="removeImageSrc('${pid}','${block.id}')">Remove image</button>`:''}
+    </div>
+  </div>`;
+  return `<div class="block image-block" id="blk-${block.id}">${toolbar}
+  <div class="image-drop" onclick="triggerImageUpload('${pid}','${block.id}')" ondragover="event.preventDefault()" ondrop="handleImageDrop(event,'${pid}','${block.id}')">
+    <div class="icon">📷</div>
+    <p>Click or drag &amp; drop to upload image</p>
+    <p style="font-size:11px;margin-top:4px;color:var(--text3)">PNG, JPG, GIF, WebP</p>
+  </div>
+  <input type="file" id="img-inp-${block.id}" accept="image/*" style="display:none" onchange="handleImageFile(event,'${pid}','${block.id}')"/>
+</div>`;
+}
+function renderBlockMenu(pid){
+  return `<div class="block-menu" id="block-menu-popup">
+  <div class="block-menu-label">TEXT</div>
+  <div class="block-menu-item" onclick="addBlock('${pid}','heading-h1')"><span class="bm-icon" style="font-family:Cinzel,serif;font-size:12px">H1</span>Heading 1</div>
+  <div class="block-menu-item" onclick="addBlock('${pid}','heading-h2')"><span class="bm-icon" style="font-family:Cinzel,serif;font-size:12px">H2</span>Heading 2</div>
+  <div class="block-menu-item" onclick="addBlock('${pid}','heading-h3')"><span class="bm-icon" style="font-family:Cinzel,serif;font-size:12px">H3</span>Heading 3</div>
+  <div class="block-menu-item" onclick="addBlock('${pid}','text')"><span class="bm-icon">¶</span>Text Block</div>
+  <div class="block-menu-sep"></div>
+  <div class="block-menu-label">INSERT</div>
+  <div class="block-menu-item" onclick="addBlock('${pid}','table')"><span class="bm-icon">⊞</span>Table</div>
+  <div class="block-menu-item" onclick="addBlock('${pid}','image')"><span class="bm-icon">🖼</span>Image</div>
+</div>`;
+}
+window.toggleBlockMenu=(e,pid)=>{
+  e.stopPropagation();
+  state.blockMenu=state.blockMenu===pid?null:pid;
+  const existing=document.getElementById('block-menu-popup');
+  if(existing)existing.remove();
+  if(state.blockMenu){
+    const btn=document.querySelector('.add-block-btn');
+    if(btn)btn.insertAdjacentHTML('beforebegin',renderBlockMenu(pid));
+  }
+};
+document.addEventListener('click',()=>{
+  if(state.blockMenu){state.blockMenu=null;const m=document.getElementById('block-menu-popup');if(m)m.remove();}
+});
+window.addBlock=(pid,type)=>{
+  const page=state.pages.find(p=>p.id===pid);if(!page)return;
+  state.blockMenu=null;const m=document.getElementById('block-menu-popup');if(m)m.remove();
+  let block;
+  if(type==='text')block={id:uid(),type:'text',content:''};
+  else if(type.startsWith('heading'))block={id:uid(),type:'heading',level:type.split('-')[1],content:''};
+  else if(type==='table')block={id:uid(),type:'table',headers:['Column 1','Column 2'],rows:[['',''],['','']]};
+  else if(type==='image')block={id:uid(),type:'image',src:null,caption:''};
+  page.blocks.push(block);save();render();
+  setTimeout(()=>{const el=document.getElementById('blk-'+block.id);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});const inp=el.querySelector('input,textarea');if(inp)inp.focus();}},80);
+};
+window.deleteBlock=(pid,bid)=>{const p=state.pages.find(p=>p.id===pid);if(p){p.blocks=p.blocks.filter(b=>b.id!==bid);save();render();}};
+window.moveBlock=(pid,bid,dir)=>{
+  const p=state.pages.find(p=>p.id===pid);if(!p)return;
+  const i=p.blocks.findIndex(b=>b.id===bid),ni=i+dir;
+  if(ni<0||ni>=p.blocks.length)return;
+  [p.blocks[i],p.blocks[ni]]=[p.blocks[ni],p.blocks[i]];save();render();
+};
+window.updateBlock=(pid,bid,key,val)=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b)b[key]=val;};
+window.autoResize=el=>{el.style.height='auto';el.style.height=el.scrollHeight+'px';};
+window.updateTableHeader=(pid,bid,ci,val)=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b)b.headers[ci]=val;};
+window.updateTableCell=(pid,bid,ri,ci,val)=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b){if(!b.rows[ri])b.rows[ri]=[];b.rows[ri][ci]=val;}};
+window.addTableRow=(pid,bid)=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b){b.rows.push(new Array(b.headers.length).fill(''));save();render();}};
+window.removeTableRow=(pid,bid,ri)=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b){b.rows.splice(ri,1);save();render();}};
+window.addTableCol=(pid,bid)=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b){b.headers.push('Column '+(b.headers.length+1));b.rows.forEach(r=>r.push(''));save();render();}};
+window.removeTableCol=(pid,bid)=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b&&b.headers.length>1){b.headers.pop();b.rows.forEach(r=>r.pop());save();render();}};
+window.triggerImageUpload=(pid,bid)=>{document.getElementById('img-inp-'+bid)?.click();};
+window.handleImageFile=(e,pid,bid)=>{
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b){b.src=ev.target.result;save();render();}};
+  reader.readAsDataURL(file);
+};
+window.handleImageDrop=(e,pid,bid)=>{
+  e.preventDefault();const file=e.dataTransfer.files[0];if(!file||!file.type.startsWith('image/'))return;
+  const reader=new FileReader();
+  reader.onload=ev=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b){b.src=ev.target.result;save();render();}};
+  reader.readAsDataURL(file);
+};
+window.removeImageSrc=(pid,bid)=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b){b.src=null;save();render();}};
+
+// ---- PRODUCTION ----
+function renderProduction(){
+  const allTasks=state.milestones.flatMap(m=>m.tasks);
+  return `<div class="production">
+  <div class="prod-header">
+    <div class="prod-title">PRODUCTION</div>
+    <button class="btn btn-gold" onclick="openAddMilestoneModal()">+ Milestone</button>
+  </div>
+  <div class="prod-tabs">
+    <button class="prod-tab ${state.productionTab==='milestones'?'active':''}" onclick="setProdTab('milestones')">MILESTONES</button>
+    <button class="prod-tab ${state.productionTab==='kanban'?'active':''}" onclick="setProdTab('kanban')">KANBAN</button>
+    <button class="prod-tab ${state.productionTab==='all'?'active':''}" onclick="setProdTab('all')">ALL TASKS</button>
+  </div>
+  ${state.productionTab==='milestones'?renderMilestones():''}
+  ${state.productionTab==='kanban'?renderKanban(allTasks):''}
+  ${state.productionTab==='all'?renderAllTasks(allTasks):''}
+</div>`;
+}
+window.setProdTab=t=>{state.productionTab=t;render();};
+function getMilestoneProgress(m){if(!m.tasks.length)return 0;return Math.round(m.tasks.filter(t=>t.status==='done').length/m.tasks.length*100);}
+function renderMilestones(){
+  const isOwner=state.auth.role==='owner';
+  const canEdit=isOwner||state.auth.role==='editor';
+  return state.milestones.map(m=>{
+    const pct=getMilestoneProgress(m);
+    const exp=state.expandedMilestones[m.id];
+    return `<div class="milestone-card">
+    <div class="milestone-header" onclick="toggleMilestone('${m.id}')">
+      <span style="font-size:12px;color:var(--text3);margin-right:4px">${exp?'▾':'▸'}</span>
+      <span class="m-name">${esc(m.title)}</span>
+      <div class="m-progress">
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <span class="m-pct">${pct}%</span>
+      </div>
+      <span class="m-status-badge badge-${m.status==='done'?'done':m.status==='active'?'active':m.status==='blocked'?'blocked':'pending'}">${m.status.toUpperCase()}</span>
+      ${isOwner?`<select onclick="event.stopPropagation()" onchange="updateMilestoneStatus('${m.id}',this.value)" style="margin-left:8px;background:var(--bg4);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-size:11px;padding:2px 4px;font-family:JetBrains Mono,monospace;outline:none">
+        <option value="pending" ${m.status==='pending'?'selected':''}>Pending</option>
+        <option value="active" ${m.status==='active'?'selected':''}>Active</option>
+        <option value="done" ${m.status==='done'?'selected':''}>Done</option>
+        <option value="blocked" ${m.status==='blocked'?'selected':''}>Blocked</option>
+      </select>
+      <button onclick="event.stopPropagation();deleteMilestone('${m.id}')" style="background:transparent;border:none;cursor:pointer;color:var(--text3);padding:2px 8px;font-size:14px" title="Delete">✕</button>`:''}
+    </div>
+    ${exp?`<div class="tasks-container">
+      ${m.tasks.map(t=>renderTaskRow(t,m.id,canEdit)).join('')}
+      ${canEdit?`<div class="add-task-row">
+        <input class="add-task-input" placeholder="+ Add task… (press Enter)" onkeydown="if(event.key==='Enter'&&this.value.trim()){addTask('${m.id}',this.value.trim());this.value='';}"/>
+      </div>`:''}
+    </div>`:''}
+  </div>`;
+  }).join('')+
+  `<button class="add-milestone-btn" onclick="openAddMilestoneModal()">+ ADD MILESTONE</button>`;
+}
+const STATUS_COLORS={todo:'var(--text3)',inprog:'var(--gold)',review:'var(--blue)',done:'var(--green)',blocked:'var(--red)'};
+function renderTaskRow(t,mid,canEdit){
+  return `<div class="task-row">
+  <div style="width:8px;height:8px;border-radius:50%;background:${STATUS_COLORS[t.status]||'var(--text3)'};flex-shrink:0"></div>
+  <div class="task-name"><input value="${esc(t.name)}" ${canEdit?'':'readonly'} oninput="updateTask('${mid}','${t.id}','name',this.value)" onblur="save()"/></div>
+  <div class="task-assignee"><select ${canEdit?'':'disabled'} onchange="updateTask('${mid}','${t.id}','assignee',this.value);save()">
+    ${state.users.map(u=>`<option value="${u.id}" ${t.assignee===u.id?'selected':''}>${esc(u.name)}</option>`).join('')}
+  </select></div>
+  <div class="task-status"><select ${canEdit?'':'disabled'} style="color:${STATUS_COLORS[t.status]||'var(--text3)'}" onchange="updateTask('${mid}','${t.id}','status',this.value);this.style.color=({'todo':'var(--text3)','inprog':'var(--gold)','review':'var(--blue)','done':'var(--green)','blocked':'var(--red)'})[this.value];save()">
+    <option value="todo" ${t.status==='todo'?'selected':''}>TODO</option>
+    <option value="inprog" ${t.status==='inprog'?'selected':''}>IN PROG</option>
+    <option value="review" ${t.status==='review'?'selected':''}>REVIEW</option>
+    <option value="done" ${t.status==='done'?'selected':''}>DONE</option>
+    <option value="blocked" ${t.status==='blocked'?'selected':''}>BLOCKED</option>
+  </select></div>
+  ${canEdit?`<button class="task-del" onclick="deleteTask('${mid}','${t.id}')">✕</button>`:''}
+</div>`;
+}
+function renderKanban(allTasks){
+  const cols=[{key:'todo',label:'TO DO',cls:'col-todo'},{key:'inprog',label:'IN PROGRESS',cls:'col-inprog'},{key:'review',label:'REVIEW',cls:'col-review'},{key:'done',label:'DONE',cls:'col-done'},{key:'blocked',label:'BLOCKED',cls:'col-blocked'}];
+  return `<div class="kanban">${cols.map(c=>{
+    const tasks=allTasks.filter(t=>t.status===c.key);
+    return `<div class="kanban-col">
+      <div class="kanban-col-header"><span>${c.label}</span><span style="color:var(--gold)">${tasks.length}</span></div>
+      <div class="kanban-cards">${tasks.map(t=>{
+        const m=state.milestones.find(m=>m.tasks.some(tt=>tt.id===t.id));
+        const assignee=state.users.find(u=>u.id===t.assignee);
+        return `<div class="kanban-card ${c.cls}"><div class="kc-name">${esc(t.name)}</div><div class="kc-meta">${m?esc(m.title.slice(0,18)):''} · ${assignee?assignee.initials:'?'}</div></div>`;
+      }).join('')}</div>
+    </div>`;}).join('')}</div>`;
+}
+function renderAllTasks(allTasks){
+  const canEdit=state.auth.role==='owner'||state.auth.role==='editor';
+  return `<div style="display:flex;flex-direction:column;gap:6px">${allTasks.map(t=>{const m=state.milestones.find(m=>m.tasks.some(tt=>tt.id===t.id));return renderTaskRow(t,m.id,canEdit);}).join('')}</div>`;
+}
+window.toggleMilestone=id=>{state.expandedMilestones[id]=!state.expandedMilestones[id];render();};
+window.updateMilestoneStatus=(mid,val)=>{const m=state.milestones.find(m=>m.id===mid);if(m){m.status=val;save();render();}};
+window.deleteMilestone=mid=>{if(!confirm('Delete this milestone and all its tasks?'))return;state.milestones=state.milestones.filter(m=>m.id!==mid);save();render();};
+window.addTask=(mid,name)=>{const m=state.milestones.find(m=>m.id===mid);if(m){m.tasks.push({id:uid(),name,assignee:state.auth.id,status:'todo'});save();render();}};
+window.updateTask=(mid,tid,key,val)=>{const m=state.milestones.find(m=>m.id===mid);const t=m?.tasks.find(t=>t.id===tid);if(t)t[key]=val;};
+window.deleteTask=(mid,tid)=>{const m=state.milestones.find(m=>m.id===mid);if(m){m.tasks=m.tasks.filter(t=>t.id!==tid);save();render();}};
+window.openAddMilestoneModal=()=>{state.modal={type:'milestone'};render();};
+
+// ---- PERMISSIONS ----
+function renderPermissions(){
+  return `<div class="permissions-panel">
+  <div class="perm-title">TEAM & ACCESS</div>
+  <p style="font-size:14px;color:var(--text2);margin-bottom:20px">Manage who can access and edit this GDD. Only owners can invite team members.</p>
+  <div class="divider"></div>
+  <div style="font-family:Cinzel,serif;font-size:11px;letter-spacing:0.15em;color:var(--text3);margin-bottom:12px">INVITE MEMBER</div>
+  <div class="perm-invite-row">
+    <input id="inv-name" placeholder="Name" style="max-width:130px"/>
+    <input id="inv-email" placeholder="Email address"/>
+    <select id="inv-role"><option value="editor">Editor</option><option value="viewer">Viewer</option></select>
+    <button class="btn btn-gold" onclick="sendInvite()">Invite</button>
+  </div>
+  <div id="inv-msg" style="font-size:12px;margin-bottom:16px;min-height:18px"></div>
+  <div class="divider"></div>
+  <div style="font-family:Cinzel,serif;font-size:11px;letter-spacing:0.15em;color:var(--text3);margin-bottom:12px">TEAM MEMBERS</div>
+  <div class="perm-user-list">
+    ${state.users.map(u=>`<div class="perm-user">
+      <div class="perm-user-avatar" style="background:${u.color};color:${u.role==='owner'?'#0d0d0f':'#fff'}">${u.initials}</div>
+      <div class="perm-user-info">
+        <div class="perm-user-name">${esc(u.name)}</div>
+        ${u.title?`<div style="font-size:12px;color:var(--text2);margin-top:4px">${esc(u.title)}</div>`:''}
+        <div class="perm-user-role">${esc(u.email)}${u.inviteCode&&!u.activated?` · <span style="color:var(--gold);font-weight:500">Code: ${u.inviteCode}</span> <button class="btn btn-sm" onclick="copyInviteCode('${u.inviteCode}','${esc(u.name)}')">Copy</button>`:''}</div>
+      </div>
+      <span class="perm-user-badge perm-badge-${u.role}">${u.role==='owner'?'DIRECTOR':u.role.toUpperCase()}</span>
+      ${u.role!=='owner'?`<select onchange="updateUserRole('${u.id}',this.value)" style="background:var(--bg4);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-size:11px;padding:2px 6px;font-family:JetBrains Mono,monospace;outline:none">
+        <option value="editor" ${u.role==='editor'?'selected':''}>Editor</option>
+        <option value="viewer" ${u.role==='viewer'?'selected':''}>Viewer</option>
+      </select>
+      <button class="btn btn-sm btn-danger" onclick="removeUser('${u.id}')">Remove</button>`:''}
+    </div>`).join('')}
+  </div>
+  <div class="divider"></div>
+  <div style="font-family:Cinzel,serif;font-size:11px;letter-spacing:0.15em;color:var(--text3);margin-bottom:12px">DEPARTMENTS</div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px">
+    ${state.departments.map(d=>`<div><div style="font-family:Cinzel,serif;font-weight:600;color:var(--gold)">${esc(d.name)}</div><div style="margin-left:6px;color:var(--text2)">${d.members.map(m=>esc(m)).join(', ')}</div></div>`).join('')}
+  </div>
+  <div class="divider"></div>
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px">
+    <div style="font-family:Cinzel,serif;font-size:10px;letter-spacing:0.15em;color:var(--text3);margin-bottom:10px">ROLE PERMISSIONS</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:13px">
+      <div style="font-family:Cinzel,serif;font-weight:600;color:var(--gold)">Director</div>
+      <div style="font-family:Cinzel,serif;font-weight:600;color:var(--blue)">Editor</div>
+      <div style="font-family:Cinzel,serif;font-weight:600;color:var(--text3)">Viewer</div>
+      <div style="color:var(--text2)">Full control</div><div style="color:var(--text2)">Edit pages & tasks</div><div style="color:var(--text2)">Read only</div>
+      <div style="color:var(--text2)">Invite users</div><div style="color:var(--text2)">Add/delete blocks</div><div style="color:var(--text2)">No editing</div>
+      <div style="color:var(--text2)">Manage roles</div><div style="color:var(--text2)">Upload images</div><div style="color:var(--text2)">View production</div>
+    </div>
+  </div>
+</div>`;
+}
+window.sendInvite=()=>{
+  const name=document.getElementById('inv-name').value.trim();
+  const email=document.getElementById('inv-email').value.trim().toLowerCase();
+  const role=document.getElementById('inv-role').value;
+  const msg=document.getElementById('inv-msg');
+  if(!name||!email){msg.textContent='Name and email required.';msg.style.color='var(--red)';return;}
+  if(state.users.find(u=>u.email===email)){msg.textContent='User already exists.';msg.style.color='var(--red)';return;}
+  const code=Math.random().toString(36).slice(2,8).toUpperCase();
+  const initials=name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+  const colors=['#4c7ec9','#4c9c6a','#c98a4c','#7c4cc9','#c94c7c'];
+  const color=colors[Math.floor(Math.random()*colors.length)];
+  state.users.push({id:uid(),name,email,role,color,initials,inviteCode:code,activated:false});
+  save();
+  msg.innerHTML=`✦ Invite created! Share this code with <b>${esc(name)}</b>: <span style="font-family:JetBrains Mono,monospace;background:var(--bg4);padding:2px 8px;border-radius:3px;color:var(--gold)">${code}</span>`;
+  msg.style.color='var(--green)';
+  document.getElementById('inv-name').value='';document.getElementById('inv-email').value='';
+
+  setTimeout(()=>{const ul=document.querySelector('.perm-user-list');if(ul)ul.innerHTML=state.users.map(u=>`<div class="perm-user"><div class="perm-user-avatar" style="background:${u.color};color:${u.role==='owner'?'#0d0d0f':'#fff'}">${u.initials}</div><div class="perm-user-info"><div class="perm-user-name">${esc(u.name)}</div><div class="perm-user-role">${esc(u.email)}${u.inviteCode&&!u.activated?` · <span style="color:var(--gold)">Code: ${u.inviteCode}</span> <button class="btn btn-sm" onclick="copyInviteCode('${u.inviteCode}','${esc(u.name)}')">Copy</button>`:''}</div></div><span class="perm-user-badge perm-badge-${u.role}">${u.role==='owner'?'DIRECTOR':u.role.toUpperCase()}</span>${u.role!=='owner'?`<button class="btn btn-sm btn-danger" onclick="removeUser('${u.id}')">Remove</button>`:''}</div>`).join('');},50);
+};
+window.updateUserRole=(uid_,role)=>{const u=state.users.find(u=>u.id===uid_);if(u){u.role=role;save();}};
+window.removeUser=uid_=>{if(!confirm('Remove this user?'))return;state.users=state.users.filter(u=>u.id!==uid_);save();render();};
+
+window.copyInviteCode=(code,name)=>{
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code).then(()=>{
+      const msg=document.getElementById('inv-msg');
+      if(msg){msg.innerHTML=`Copied <b>${esc(code)}</b> for ${esc(name)}`;msg.style.color='var(--green)';setTimeout(()=>{msg.textContent='';},2500);}    
+    }).catch(()=>{alert('Copy failed');});
+  }else{
+    const ta=document.createElement('textarea');ta.value=code;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');const msg=document.getElementById('inv-msg');if(msg){msg.innerHTML=`Copied <b>${esc(code)}</b> for ${esc(name)}`;msg.style.color='var(--green)';setTimeout(()=>{msg.textContent='';},2500);} }catch(e){alert('Copy failed');}ta.remove();
+  }
+};
+
+// ---- MODAL ----
+function renderModal(){
+  const m=state.modal;
+  if(m.type==='milestone'){
+    return `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <div class="modal-title">NEW MILESTONE</div>
+      <div class="modal-field"><label>TITLE</label><input id="m-title" placeholder="Milestone name" autofocus onkeydown="if(event.key==='Enter')confirmAddMilestone()"/></div>
+      <div class="modal-field"><label>STATUS</label><select id="m-status">
+        <option value="pending">Pending</option>
+        <option value="active">Active</option>
+        <option value="done">Done</option>
+        <option value="blocked">Blocked</option>
+      </select></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-gold" onclick="confirmAddMilestone()">Create Milestone</button>
+      </div>
+    </div></div>`;
+  }
+  return '';
+}
+window.closeModal=()=>{state.modal=null;render();};
+window.confirmAddMilestone=()=>{
+  const title=document.getElementById('m-title').value.trim();
+  const status=document.getElementById('m-status').value;
+  if(!title)return;
+  const id=uid();
+  state.milestones.push({id,title,status,tasks:[]});
+  state.expandedMilestones[id]=true;
+  state.modal=null;save();render();
+};
+
+// ---- BIND ----
+function bindApp(){
+  document.querySelectorAll('textarea').forEach(el=>{
+    el.style.height='auto';el.style.height=el.scrollHeight+'px';
+    el.addEventListener('input',()=>autoResize(el));
+  });
+}
+
+// ---- INIT ----
+load();
+if(!state.currentPageId&&state.pages.length)state.currentPageId=state.pages[0].id;
+render();
+</script>
+</body>
+</html>

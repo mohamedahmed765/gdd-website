@@ -15,8 +15,8 @@
   --red:#c94c4c;--green:#4c9c6a;--amber:#c98a4c;--blue:#4c7ec9;--purple:#7c4cc9;
   --sidebar:220px;
 }
-body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow:hidden;height:100vh}
-.app{display:flex;flex-direction:column;height:100vh}
+body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow:auto;height:auto}
+.app{display:flex;flex-direction:column;min-height:100vh}
 
 /* TOP BAR */
 .topbar{display:flex;align-items:center;gap:16px;padding:0 20px;height:52px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
@@ -220,6 +220,40 @@ body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--text);min-
 .modal-actions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end}
 .divider{height:1px;background:var(--border);margin:20px 0}
 .hidden{display:none!important}
+@media (max-width:1040px){
+  .main{flex-direction:column;}
+  .sidebar{width:100%;border-right:none;border-bottom:1px solid var(--border);}
+  .sidebar-scroll{max-height:260px;}
+  .content{overflow:visible;}
+  .page-editor{padding:32px 24px 100px;}
+  .production{padding:28px 24px;}
+  .permissions-panel{padding:28px 24px;}
+  .auth-box{width:100%;max-width:440px;margin:18px auto;}
+  .prod-header{flex-wrap:wrap;gap:10px;}
+  .page-meta{flex-wrap:wrap;gap:10px;}
+  .auth-tabs{flex-wrap:wrap;}
+  .kanban{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media (max-width:760px){
+  .topbar{flex-wrap:wrap;height:auto;padding:12px 16px;}
+  .topbar-user{width:100%;justify-content:space-between;}
+  .logo{width:100%;justify-content:space-between;}
+  .sidebar{border-right:none;border-bottom:1px solid var(--border);}
+  .sidebar-item,.add-page-btn{font-size:12px;}
+  .page-editor{padding:24px 16px 80px;}
+  .page-title-input{font-size:24px;}
+  .page-meta{flex-direction:column;align-items:flex-start;}
+  .prod-header{flex-direction:column;align-items:flex-start;}
+  .task-row{flex-direction:column;align-items:flex-start;gap:8px;}
+  .task-assignee,.task-status select{width:100%;}
+  .perm-invite-row{flex-direction:column;align-items:flex-start;}
+  .perm-invite-row input,.perm-invite-row select{width:100%;}
+  .auth-box{padding:26px 18px;}
+  .auth-field input{font-size:14px;padding:10px 12px;}
+  .kanban{grid-template-columns:1fr;}
+  .kanban-col{min-width:auto;}
+  .prod-title{font-size:20px;}
+}
 input,textarea,select{font-family:'Crimson Pro',serif}
 </style>
 </head>
@@ -372,7 +406,7 @@ function renderAuth(){
     <div id="register-form" class="hidden">
       <div class="auth-field"><label>NAME</label><input type="text" id="reg-name" placeholder="Your name"/></div>
       <div class="auth-field"><label>EMAIL</label><input type="email" id="reg-email" placeholder="your@email.com"/></div>
-      <div class="auth-field"><label>INVITATION CODE</label><input type="text" id="reg-code" placeholder="Enter code to Director"/></div>
+      <div class="auth-field"><label>INVITATION CODE</label><input type="text" id="reg-code" placeholder="Enter the code you got from the Director"/></div>
       <div id="reg-error" class="auth-error hidden"></div>
       <button class="btn btn-gold" style="width:100%;padding:10px;font-size:15px;letter-spacing:0.06em;font-family:Cinzel,serif" onclick="doRegister()">REQUEST ACCESS</button>
     </div>

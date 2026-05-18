@@ -384,87 +384,78 @@ function render(){
   bindApp();
 }
 
-// ---- AUTH ----
 function renderAuth(){
   return `<div class="auth-screen">
-  <div class="auth-box">
-    <div class="auth-logo">
-      <div style="margin:0 auto 16px;width:56px;height:56px">${COMPASS_SVG.replace('<svg ','<svg width="56" height="56" ')}</div>
-      <div class="auth-title">COMPASS STUDIOS</div>
-      <div class="auth-sub">Game Design Document Platform</div>
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="compass-icon" style="width:40px;height:40px;margin:0 auto 12px">${COMPASS_SVG}</div>
+        <div class="auth-title">COMPASS STUDIOS</div>
+        <div class="auth-sub">Game Design Documentation Platform</div>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-owner">DIRECTOR LOGIN</button>
+        <button class="auth-tab" id="tab-team">TEAM ACCESS</button>
+      </div>
+      <div id="auth-form-area"></div>
     </div>
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Sign In</button>
-      <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Register</button>
-    </div>
-    <div id="login-form">
-      <div class="auth-field"><label>EMAIL</label><input type="email" id="auth-email" placeholder="your@compass.studio" autocomplete="username"/></div>
-      <div class="auth-field"><label>PASSWORD</label><input type="password" id="auth-pass" placeholder="••••••••" autocomplete="current-password"/></div>
-      <div id="auth-error" class="auth-error hidden"></div>
-      <button class="btn btn-gold" style="width:100%;padding:10px;font-size:15px;letter-spacing:0.06em;font-family:Cinzel,serif" onclick="doLogin()">ENTER</button>
-    </div>
-    <div id="register-form" class="hidden">
-      <div class="auth-field"><label>NAME</label><input type="text" id="reg-name" placeholder="Your name"/></div>
-      <div class="auth-field"><label>EMAIL</label><input type="email" id="reg-email" placeholder="your@email.com"/></div>
-      <div class="auth-field"><label>INVITATION CODE</label><input type="text" id="reg-code" placeholder="Enter the code you got from the Director"/></div>
-      <div id="reg-error" class="auth-error hidden"></div>
-      <button class="btn btn-gold" style="width:100%;padding:10px;font-size:15px;letter-spacing:0.06em;font-family:Cinzel,serif" onclick="doRegister()">REQUEST ACCESS</button>
-    </div>
-      
-  </div>
-</div>`;
-}
-window.switchAuthTab=(tab)=>{
-  document.getElementById('tab-login').classList.toggle('active',tab==='login');
-  document.getElementById('tab-register').classList.toggle('active',tab==='register');
-  document.getElementById('login-form').classList.toggle('hidden',tab!=='login');
-  document.getElementById('register-form').classList.toggle('hidden',tab!=='register');
-};
-window.doLogin=()=>{
-  const email=document.getElementById('auth-email').value.trim().toLowerCase();
-  const pass=document.getElementById('auth-pass').value;
-  const err=document.getElementById('auth-error');
-  const owner=OWNERS.find(o=>o.email===email);
-  if(owner&&OWNER_PASSWORDS[owner.id]===pass){
-    state.auth={...owner};
-    save();
-    if(!state.currentPageId&&state.pages.length)state.currentPageId=state.pages[0].id;
-    render();return;
-  }
-  const u=state.users.find(u=>u.email===email&&u.id!=='owner1'&&u.id!=='owner2');
-  if(u&&u.password===pass){
-    state.auth=u;
-    save();
-    if(!state.currentPageId&&state.pages.length)state.currentPageId=state.pages[0].id;
-    render();return;
-  }
-  err.textContent='Invalid credentials.';err.classList.remove('hidden');
-};
-window.doRegister=()=>{
-  const name=document.getElementById('reg-name').value.trim();
-  const email=document.getElementById('reg-email').value.trim().toLowerCase();
-  const code=document.getElementById('reg-code').value.trim();
-  const err=document.getElementById('reg-error');
-  const invite=state.users.find(u=>u.inviteCode===code&&u.email===email&&!u.activated);
-  if(!invite){err.textContent='Invalid invite code or email.';err.classList.remove('hidden');return;}
-  invite.activated=true;invite.password=code;invite.name=name;
-  state.auth=invite;
-  save();
-  if(!state.currentPageId&&state.pages.length)state.currentPageId=state.pages[0].id;
-  render();
-};
-function bindAuth(){
-  const ep=document.getElementById('auth-pass');
-  const ee=document.getElementById('auth-email');
-  if(ep)ep.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-  if(ee)ee.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  </div>`;
 }
 
-// ---- APP SHELL ----
+let activeAuthTab = 'owner';
+function bindAuth(){
+  const formArea = document.getElementById('auth-form-area');
+  const tOwner = document.getElementById('tab-owner');
+  const tTeam = document.getElementById('tab-team');
+  
+  const setTab = (tab)=>{
+    activeAuthTab = tab;
+    if(tab==='owner'){
+      tOwner.classList.add('active');tTeam.classList.remove('active');
+      formArea.innerHTML = `
+        <div class="auth-field"><label>SELECT DIRECTOR profile</label><select id="auth-owner-id" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:9px 12px;color:var(--text);font-size:15px;outline:none">${OWNERS.map(o=>`<option value="${o.id}">${esc(o.name)} (${esc(o.title)})</option>`).join('')}</select></div>
+        <div class="auth-field"><label>ACCESS KEY</label><input type="password" id="auth-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitAuth()"/></div>
+        <div class="auth-error" id="auth-err"></div>
+        <button class="btn btn-gold" style="width:100%;padding:10px" onclick="submitAuth()">Enter Platform</button>
+      `;
+    } else {
+      tOwner.classList.remove('active');tTeam.classList.add('active');
+      formArea.innerHTML = `
+        <div class="auth-field"><label>INVITATION CODE / TEAM SYMBOL</label><input type="text" id="auth-code" placeholder="e.g. HAM001" style="text-transform:uppercase" onkeydown="if(event.key==='Enter')submitAuth()"/></div>
+        <div class="auth-field"><label>YOUR FULL NAME (FIRST TIME ONLY)</label><input type="text" id="auth-team-name" placeholder="Enter your name if activating code"/></div>
+        <div class="auth-error" id="auth-err"></div>
+        <button class="btn btn-gold" style="width:100%;padding:10px" onclick="submitAuth()">Verify Credentials</button>
+      `;
+    }
+  };
+  tOwner.onclick = ()=>setTab('owner');
+  tTeam.onclick = ()=>setTab('team');
+  setTab(activeAuthTab);
+}
+
+window.submitAuth=()=>{
+  const err=document.getElementById('auth-err');
+  if(activeAuthTab==='owner'){
+    const id=document.getElementById('auth-owner-id').value;
+    const pass=document.getElementById('auth-pass').value;
+    if(OWNER_PASSWORDS[id]===pass){
+      state.auth = state.users.find(u=>u.id===id);
+      save();render();
+    } else { err.textContent='Invalid access key for this director profile.'; }
+  } else {
+    const code=document.getElementById('auth-code').value.trim().toUpperCase();
+    const nameInput=document.getElementById('auth-team-name').value.trim();
+    if(!code){err.textContent='Please fill in your assignment code.';return;}
+    const u=state.users.find(x=>String(x.inviteCode||'').toUpperCase()===code);
+    if(u){
+      if(!u.activated && nameInput){ u.name=nameInput; u.activated=true; }
+      state.auth = u; save(); render();
+    } else { err.textContent='Code not found in production registry.'; }
+  }
+};
+
 function renderApp(){
-  const page=state.pages.find(p=>p.id===state.currentPageId);
-  return `
-  <div class="app">
+  const page = state.pages.find(p=>p.id===state.currentPageId) || state.pages[0];
+  return `<div class="app">
     ${renderTopbar()}
     <div class="main">
       ${renderSidebar()}
@@ -477,21 +468,22 @@ function renderApp(){
   </div>
   ${state.modal?renderModal():''}`;
 }
+
 function renderTopbar(){
   const u=state.auth;
   return `<div class="topbar">
-  <div class="logo">
-    <div class="compass-icon">${COMPASS_SVG}</div>
-    <div><div class="logo-text">COMPASS STUDIOS</div><div class="logo-sub">GDD PLATFORM</div></div>
-  </div>
-  <div class="topbar-spacer"></div>
-  <div class="topbar-user">
-    <div class="user-badge" style="background:${u.color||'var(--gold)'}">${u.initials||'?'}</div>
-    <span>${esc(u.name)}</span>
-    <span style="color:var(--text3);font-size:11px;font-family:JetBrains Mono,monospace">${u.role==='owner'?'DIRECTOR':u.role.toUpperCase()}</span>
-    <button class="btn btn-sm" onclick="doLogout()">Sign out</button>
-  </div>
-</div>`;
+    <div class="logo">
+      <div class="compass-icon">${COMPASS_SVG}</div>
+      <div><div class="logo-text">COMPASS STUDIOS</div><div class="logo-sub">GDD PLATFORM</div></div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-user">
+      <div class="user-badge" style="background:${u.color||'var(--gold)'}">${u.initials||'?'}</div>
+      <span>${esc(u.name)}</span>
+      <span style="color:var(--text3);font-size:11px;font-family:JetBrains Mono,monospace">${u.role==='owner'?'DIRECTOR':u.role.toUpperCase()}</span>
+      <button class="btn btn-sm" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>`;
 }
 window.doLogout=()=>{state.auth=null;save();render();};
 
@@ -499,84 +491,81 @@ function renderSidebar(){
   const isOwner=state.auth.role==='owner';
   const canEdit=isOwner||state.auth.role==='editor';
   return `<div class="sidebar">
-  <div class="sidebar-section" style="padding:8px 0">
-    <div class="sidebar-item ${state.currentView==='pages'&&!state.currentPageId?'active':''}" onclick="setView('pages',null)">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-      Dashboard
+    <div class="sidebar-section" style="padding:8px 0">
+      <div class="sidebar-item ${state.currentView==='pages'&&!state.currentPageId?'active':''}" onclick="setView('pages',null)">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg> Dashboard
+      </div>
+      <div class="sidebar-item ${state.currentView==='production'?'active':''}" onclick="setView('production')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg> Production
+      </div>
+      ${isOwner?`<div class="sidebar-item ${state.currentView==='permissions'?'active':''}" onclick="setView('permissions')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg> Team & Access
+      </div>`:''}
     </div>
-    <div class="sidebar-item ${state.currentView==='production'?'active':''}" onclick="setView('production')">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-      Production
+    <div class="sidebar-section" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+      <div class="sidebar-label" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>PAGES</span>
+        <span onclick="downloadProjectPDF()" style="cursor:pointer; color:var(--gold); font-size:9px; letter-spacing:0.05em; text-transform:uppercase; font-family:'Cinzel', serif;" title="Export total project documentation to print / save PDF">Download Project PDF</span>
+      </div>
+      <div class="sidebar-scroll">
+        ${state.pages.map(p=>`
+          <div class="sidebar-item ${state.currentView==='pages'&&state.currentPageId===p.id?'active':''}" onclick="setView('pages','${p.id}')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" data-pid="${p.id}">${esc(p.title||'Untitled')}</span>
+            ${canEdit?`<button class="page-del" onclick="event.stopPropagation();deletePage('${p.id}')">✕</button>`:''}
+          </div>
+        `).join('')}
+        ${canEdit?`<button class="add-page-btn" onclick="createNewPage()">+ Create new page</button>`:''}
+      </div>
     </div>
-    ${isOwner?`<div class="sidebar-item ${state.currentView==='permissions'?'active':''}" onclick="setView('permissions')">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-      Team & Access
-    </div>`:''}
-  </div>
-  <div class="sidebar-section" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
-    <div class="sidebar-label">PAGES</div>
-    <div class="sidebar-scroll">
-      ${state.pages.map(p=>`
-      <div class="sidebar-item ${state.currentView==='pages'&&state.currentPageId===p.id?'active':''}" onclick="setView('pages','${p.id}')">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.title||'Untitled')}</span>
-        ${canEdit?`<button class="page-del" onclick="deletePage(event,'${p.id}')">✕</button>`:''}
-      </div>`).join('')}
-      ${canEdit?`<button class="add-page-btn" onclick="addPage()">
-        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-        Add page
-      </button>`:''}
-    </div>
-  </div>
-</div>`;
-}
-window.setView=(view,pageId)=>{
-  state.currentView=view;
-  if(pageId!==undefined)state.currentPageId=pageId;
-  if(view==='pages'&&!state.currentPageId&&state.pages.length)state.currentPageId=state.pages[0].id;
-  state.blockMenu=null;render();
-};
-window.addPage=()=>{
-  const id=uid();
-  state.pages.push({id,title:'New Page',blocks:[{id:uid(),type:'heading',level:'h1',content:'New Page'}]});
-  state.currentView='pages';state.currentPageId=id;save();render();
-};
-window.deletePage=(e,id)=>{
-  e.stopPropagation();if(!confirm('Delete this page?'))return;
-  state.pages=state.pages.filter(p=>p.id!==id);
-  if(state.currentPageId===id)state.currentPageId=state.pages[0]?.id||null;
-  save();render();
-};
-
-// ---- PAGE EDITOR ----
-function renderNoPage(){
-  return `<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:16px;color:var(--text3)">
-    <div style="font-family:Cinzel,serif;font-size:22px;color:var(--gold);opacity:0.2">✦</div>
-    <div>Select or create a page to begin</div>
   </div>`;
 }
-function renderPageEditor(page){
-  const canEdit=state.auth.role==='owner'||state.auth.role==='editor';
-  return `<div class="page-editor">
-  ${canEdit
-    ?`<input class="page-title-input" value="${esc(page.title)}" placeholder="Page Title" oninput="updatePageTitle('${page.id}',this.value)"/>`
-    :`<div style="font-family:Cinzel,serif;font-size:28px;font-weight:700;color:var(--gold2);margin-bottom:6px;letter-spacing:0.04em">${esc(page.title)}</div>`}
-  <div class="page-meta">
-    <span>✦</span><span>Compass Studios GDD</span><span>·</span>
-    <span>${page.blocks.length} block${page.blocks.length!==1?'s':''}</span>
-  </div>
-  <div class="blocks" id="blocks-container">
-    ${page.blocks.map((b,i)=>renderBlock(b,i,page.id,canEdit)).join('')}
-  </div>
-  ${canEdit?`<div class="add-block-area">
-    <button class="add-block-btn" onclick="toggleBlockMenu(event,'${page.id}')">
-      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-      Add block
-    </button>
-    ${state.blockMenu===page.id?renderBlockMenu(page.id):''}
-  </div>`:''}
-</div>`;
+
+window.setView=(v,pid=null)=>{
+  state.currentView=v;
+  state.currentPageId=pid;
+  if(v==='pages' && !pid && state.pages.length>0) state.currentPageId=state.pages[0].id;
+  render();
+};
+window.createNewPage=()=>{
+  const id=uid();
+  state.pages.push({id,title:'Untitled Page',blocks:[{id:uid(),type:'heading',level:'h1',content:'Untitled Section'}]});
+  state.currentPageId=id;state.currentView='pages';save();render();
+};
+window.deletePage=(id)=>{
+  if(state.pages.length<=1)return;
+  if(confirm('Are you sure you want to remove this documentation page?')){
+    state.pages=state.pages.filter(p=>p.id!==id);
+    if(state.currentPageId===id) state.currentPageId=state.pages[0].id;
+    save();render();
+  }
+};
+
+function renderNoPage(){
+  return `<div style="padding:40px;text-align:center;color:var(--text3)">No document pages exist. Create one in the sidebar.</div>`;
 }
+
+function renderPageEditor(page){
+  const canEdit = state.auth.role==='owner'||state.auth.role==='editor';
+  return `<div class="page-editor">
+    <input class="page-title-input" value="${esc(page.title)}" ${canEdit?'':'readonly'} oninput="updatePageTitle('${page.id}',this.value)" onblur="save()" placeholder="Untitled Page"/>
+    <div class="page-meta">
+      <span>GDD Page Reference: <span style="color:var(--text2);font-family:JetBrains Mono">${page.id}</span></span>
+      <span>•</span>
+      <span>Status: <span style="color:var(--gold)">Verified Registry</span></span>
+    </div>
+    <div class="blocks">
+      ${page.blocks.map((b,idx)=>renderBlock(b,idx,page.id,canEdit)).join('')}
+    </div>
+    ${canEdit?`<div class="add-block-area">
+      <button class="add-block-btn" onclick="toggleBlockMenu(event,'${page.id}')">
+        <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> Add block
+      </button>
+      ${state.blockMenu===page.id?renderBlockMenu(page.id):''}
+    </div>`:''}
+  </div>`;
+}
+
 window.updatePageTitle=(id,val)=>{
   const p=state.pages.find(p=>p.id===id);if(p)p.title=val;save();
   document.querySelectorAll('.sidebar-item span').forEach(el=>{
@@ -590,36 +579,129 @@ function renderBlock(block,idx,pid,canEdit){
     <button class="block-btn" onclick="moveBlock('${pid}','${block.id}',1)" title="Move down">↓</button>
     <button class="block-btn del" onclick="deleteBlock('${pid}','${block.id}')" title="Delete">✕</button>
   </div>`:'';
+  
   if(block.type==='text')return `<div class="block text-block" id="blk-${block.id}">${toolbar}<textarea ${canEdit?'':'readonly'} oninput="updateBlock('${pid}','${block.id}','content',this.value);autoResize(this)" onblur="save()" placeholder="Write something…">${esc(block.content||'')}</textarea></div>`;
   if(block.type==='heading')return `<div class="block heading-block ${block.level}" id="blk-${block.id}">${toolbar}<input ${canEdit?'':'readonly'} value="${esc(block.content||'')}" placeholder="${block.level==='h1'?'Title':block.level==='h2'?'Section':'Subsection'}" oninput="updateBlock('${pid}','${block.id}','content',this.value)" onblur="save()"/></div>`;
   if(block.type==='table')return renderTableBlock(block,pid,canEdit,toolbar);
   if(block.type==='image')return renderImageBlock(block,pid,canEdit,toolbar);
   return '';
 }
+
 function renderTableBlock(block,pid,canEdit,toolbar){
   const headers=block.headers||['Column 1'];
   const rows=block.rows||[[]];
   return `<div class="block table-block" id="blk-${block.id}">${toolbar}
-  <div style="overflow-x:auto">
-  <table class="block-table">
-    <thead><tr>
-      ${headers.map((h,hi)=>`<th><input value="${esc(h)}" ${canEdit?'':'readonly'} placeholder="Column" oninput="updateTableHeader('${pid}','${block.id}',${hi},this.value)" onblur="save()"/></th>`).join('')}
-      ${canEdit?`<th style="width:36px;text-align:center"><button class="block-btn" onclick="addTableCol('${pid}','${block.id}')" title="Add column" style="font-size:14px">+</button></th>`:''}
-    </tr></thead>
-    <tbody>
-      ${rows.map((row,ri)=>`<tr>
-        ${headers.map((_,ci)=>`<td><input value="${esc((row[ci]||''))}" ${canEdit?'':'readonly'} placeholder="—" oninput="updateTableCell('${pid}','${block.id}',${ri},${ci},this.value)" onblur="save()"/></td>`).join('')}
-        ${canEdit?`<td style="text-align:center"><button class="block-btn del" onclick="removeTableRow('${pid}','${block.id}',${ri})" title="Remove row">✕</button></td>`:''}
-      </tr>`).join('')}
-    </tbody>
-  </table>
-  </div>
-  ${canEdit?`<div class="table-controls">
-    <button class="btn btn-sm" onclick="addTableRow('${pid}','${block.id}')">+ Row</button>
-    <button class="btn btn-sm btn-danger" onclick="removeTableCol('${pid}','${block.id}')">− Column</button>
-  </div>`:''}
-</div>`;
+    <div style="overflow-x:auto">
+      <table class="block-table">
+        <thead><tr>
+          ${headers.map((h,hi)=>`<th><input value="${esc(h)}" ${canEdit?'':'readonly'} placeholder="Column" oninput="updateTableHeader('${pid}','${block.id}',${hi},this.value)" onblur="save()"/></th>`).join('')}
+          ${canEdit?`<th style="width:36px;text-align:center"><button class="block-btn" onclick="addTableCol('${pid}','${block.id}')" title="Add column" style="font-size:14px">+</button></th>`:''}
+        </tr></thead>
+        <tbody>
+          ${rows.map((row,ri)=>`<tr>
+            ${headers.map((_,ci)=>`<td><input value="${esc((row[ci]||''))}" ${canEdit?'':'readonly'} placeholder="—" oninput="updateTableCell('${pid}','${block.id}',${ri},${ci},this.value)" onblur="save()"/></td>`).join('')}
+            ${canEdit?`<td style="text-align:center"><button class="block-btn del" onclick="removeTableRow('${pid}','${block.id}',ri)" title="Remove row">✕</button></td>`:''}
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="table-controls" style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        ${canEdit?`<button class="btn btn-sm" onclick="addTableRow('${pid}','${block.id}')">+ Row</button>
+        <button class="btn btn-sm btn-danger" onclick="removeTableCol('${pid}','${block.id}')">− Column</button>`:''}
+      </div>
+      <button class="btn btn-sm btn-gold" onclick="downloadTableCSV('${pid}','${block.id}')" title="Download spreadsheet layout as CSV format for programmers">⬇ CSV</button>
+    </div>
+  </div>`;
 }
+
+window.downloadTableCSV=(pid, bid)=>{
+  const p = state.pages.find(x=>x.id===pid); if(!p) return;
+  const b = p.blocks.find(x=>x.id===bid); if(!b||b.type!=='table') return;
+  const headers = b.headers || [];
+  const rows = b.rows || [];
+  let csvContent = "";
+  
+  csvContent += headers.map(h => {
+    let text = h.replace(/"/g, '""');
+    return `"${text}"`;
+  }).join(",") + "\r\n";
+  
+  rows.forEach(row => {
+    csvContent += headers.map((_, ci) => {
+      let val = row[ci] || '';
+      let text = val.replace(/"/g, '""');
+      return `"${text}"`;
+    }).join(",") + "\r\n";
+  });
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `${p.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_table_${bid}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+window.downloadProjectPDF=()=>{
+  const printWindow = window.open('', '_blank');
+  let htmlContent = `<html><head><title>GDD Project Copy PDF — ${esc(state.auth.name)}</title><style>
+    body { font-family: 'Crimson Pro', serif; padding: 40px; color: #111; background: #fff; line-height: 1.6; }
+    h1 { font-family: 'Cinzel', serif; font-size: 26px; border-bottom: 2px solid #c9a84c; padding-bottom: 8px; margin-top: 30px; color: #0d0d0f; }
+    h2 { font-family: 'Cinzel', serif; font-size: 20px; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-top: 24px; color: #1c1c24; }
+    h3 { font-family: 'Cinzel', serif; font-size: 15px; margin-top: 18px; color: #222; text-transform: uppercase; }
+    p, div { font-size: 15px; white-space: pre-wrap; margin-bottom: 12px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
+    th { background: #f2f2f2; border: 1px solid #aaa; padding: 8px; font-family: 'Cinzel', serif; text-align: left; font-weight: bold; }
+    td { border: 1px solid #aaa; padding: 8px; vertical-align: top; }
+    .page-break { page-break-after: always; }
+    .meta { font-size: 12px; color: #555; margin-bottom: 30px; font-family: sans-serif; }
+  </style></head><body>`;
+  
+  htmlContent += `<div style="text-align:center; padding: 100px 0;" class="page-break">
+    <h1 style="font-size:36px; border:none; margin-bottom:10px;">COMPASS STUDIOS</h1>
+    <h2 style="font-size:20px; border:none; margin-bottom:40px; letter-spacing:3px;">GAME DESIGN DOCUMENTATION Copy</h2>
+    <div class="meta">Exported by Master Registry Protocol<br>Operator Account: ${esc(state.auth.name)} (${esc(state.auth.role.toUpperCase())})<br>Date: ${new Date().toLocaleDateString()}</div>
+  </div>`;
+  
+  state.pages.forEach((p, pIdx) => {
+    htmlContent += `<h1>Page Reference: ${esc(p.title || 'Untitled')}</h1>`;
+    p.blocks.forEach(b => {
+      if(b.type === 'heading') {
+        if(b.level === 'h1') htmlContent += `<h1>${esc(b.content || '')}</h1>`;
+        else if(b.level === 'h2') htmlContent += `<h2>${esc(b.content || '')}</h2>`;
+        else htmlContent += `<h3>${esc(b.content || '')}</h3>`;
+      } else if(b.type === 'text') {
+        htmlContent += `<p>${esc(b.content || '')}</p>`;
+      } else if(b.type === 'table') {
+        const h = b.headers || [];
+        const r = b.rows || [];
+        htmlContent += `<table><thead><tr>${h.map(head => `<th>${esc(head)}</th>`).join('')}</tr></thead><tbody>`;
+        r.forEach(row => {
+          htmlContent += `<tr>${h.map((_, ci) => `<td>${esc(row[ci] || '')}</td>`).join('')}</tr>`;
+        });
+        htmlContent += `</tbody></table>`;
+      } else if(b.type === 'image' && b.src) {
+        htmlContent += `<div style="text-align:center; margin: 15px 0;"><img src="${b.src}" style="max-width:80%; max-height:300px; border:1px solid #aaa;"/><br><span style="font-style:italic; font-size:12px;">${esc(b.caption || '')}</span></div>`;
+      }
+    });
+    if(pIdx < state.pages.length - 1) {
+      htmlContent += `<div class="page-break"></div>`;
+    }
+  });
+  
+  htmlContent += `</body></html>`;
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+  }, 600);
+};
+
 function renderImageBlock(block,pid,canEdit,toolbar){
   if(block.src)return `<div class="block image-block" id="blk-${block.id}">${toolbar}
     <div class="image-preview">
@@ -629,101 +711,144 @@ function renderImageBlock(block,pid,canEdit,toolbar){
     </div>
   </div>`;
   return `<div class="block image-block" id="blk-${block.id}">${toolbar}
-  <div class="image-drop" onclick="triggerImageUpload('${pid}','${block.id}')" ondragover="event.preventDefault()" ondrop="handleImageDrop(event,'${pid}','${block.id}')">
-    <div class="icon">📷</div>
-    <p>Click or drag &amp; drop to upload image</p>
-    <p style="font-size:11px;margin-top:4px;color:var(--text3)">PNG, JPG, GIF, WebP</p>
-  </div>
-  <input type="file" id="img-inp-${block.id}" accept="image/*" style="display:none" onchange="handleImageFile(event,'${pid}','${block.id}')"/>
-</div>`;
+    <div class="image-drop" onclick="triggerImageUpload('${pid}','${block.id}')" ondragover="event.preventDefault()" ondrop="handleImageDrop(event,'${pid}','${block.id}')">
+      <div class="icon">📷</div>
+      <p>Click or drag &amp; drop to upload image</p>
+      <p style="font-size:11px;margin-top:4px;color:var(--text3)">PNG, JPG, GIF, WebP</p>
+    </div>
+    <input type="file" id="img-inp-${block.id}" accept="image/*" style="display:none" onchange="handleImageFile(event,'${pid}','${block.id}')"/>
+  </div>`;
 }
+
 function renderBlockMenu(pid){
   return `<div class="block-menu" id="block-menu-popup">
-  <div class="block-menu-label">TEXT</div>
-  <div class="block-menu-item" onclick="addBlock('${pid}','heading-h1')"><span class="bm-icon" style="font-family:Cinzel,serif;font-size:12px">H1</span>Heading 1</div>
-  <div class="block-menu-item" onclick="addBlock('${pid}','heading-h2')"><span class="bm-icon" style="font-family:Cinzel,serif;font-size:12px">H2</span>Heading 2</div>
-  <div class="block-menu-item" onclick="addBlock('${pid}','heading-h3')"><span class="bm-icon" style="font-family:Cinzel,serif;font-size:12px">H3</span>Heading 3</div>
-  <div class="block-menu-item" onclick="addBlock('${pid}','text')"><span class="bm-icon">¶</span>Text Block</div>
-  <div class="block-menu-sep"></div>
-  <div class="block-menu-label">INSERT</div>
-  <div class="block-menu-item" onclick="addBlock('${pid}','table')"><span class="bm-icon">⊞</span>Table</div>
-  <div class="block-menu-item" onclick="addBlock('${pid}','image')"><span class="bm-icon">🖼</span>Image</div>
-</div>`;
+    <div class="block-menu-label">TEXT</div>
+    <div class="block-menu-item" onclick="addBlock('${pid}','heading-h1')"><span class="bm-icon" style="font-family:Cinzel,serif;font-size:12px">H1</span>Heading 1</div>
+    <div class="block-menu-item" onclick="addBlock('${pid}','heading-h2')"><span class="bm-icon" style="font-family:Cinzel,serif;font-size:12px">H2</span>Heading 2</div>
+    <div class="block-menu-item" onclick="addBlock('${pid}','heading-h3')"><span class="bm-icon" style="font-family:Cinzel,serif;font-size:12px">H3</span>Heading 3</div>
+    <div class="block-menu-item" onclick="addBlock('${pid}','text')"><span class="bm-icon">¶</span>Text Block</div>
+    <div class="block-menu-sep"></div>
+    <div class="block-menu-label">INSERT</div>
+    <div class="block-menu-item" onclick="addBlock('${pid}','table')"><span class="bm-icon">⊞</span>Table</div>
+    <div class="block-menu-item" onclick="addBlock('${pid}','image')"><span class="bm-icon">🖼</span>Image</div>
+  </div>`;
 }
+
 window.toggleBlockMenu=(e,pid)=>{
   e.stopPropagation();
   state.blockMenu=state.blockMenu===pid?null:pid;
-  const existing=document.getElementById('block-menu-popup');
-  if(existing)existing.remove();
-  if(state.blockMenu){
-    const btn=document.querySelector('.add-block-btn');
-    if(btn)btn.insertAdjacentHTML('beforebegin',renderBlockMenu(pid));
+  render();
+};
+
+window.addBlock=(pid,type)=>{
+  const p=state.pages.find(x=>x.id===pid);if(!p)return;
+  state.blockMenu=null;
+  const id=uid();
+  if(type.startsWith('heading-')){
+    p.blocks.push({id,type:'heading',level:type.split('-')[1],content:''});
+  } else if(type==='text'){
+    p.blocks.push({id,type:'text',content:''});
+  } else if(type==='table'){
+    p.blocks.push({id,type:'table',headers:['Column 1','Column 2'],rows:[['',''],['','']]});
+  } else if(type==='image'){
+    p.blocks.push({id,type:'image',src:'',caption:''});
+  }
+  save();render();
+  setTimeout(()=>{const el=document.querySelector(`#blk-${id} input, #blk-${id} textarea`);if(el)el.focus();},50);
+};
+
+window.updateBlock=(pid,bid,field,val)=>{
+  const p=state.pages.find(x=>x.id===pid);if(!p)return;
+  const b=p.blocks.find(x=>x.id===bid);if(b)b[field]=val;
+};
+window.updateTableHeader=(pid,bid,hi,val)=>{
+  const p=state.pages.find(x=>x.id===pid);if(!p)return;
+  const b=p.blocks.find(x=>x.id===bid);if(b&&b.headers)b.headers[hi]=val;
+};
+window.updateTableCell=(pid,bid,ri,ci,val)=>{
+  const p=state.pages.find(x=>x.id===pid);if(!p)return;
+  const b=p.blocks.find(x=>x.id===bid);if(b&&b.rows&&b.rows[ri])b.rows[ri][ci]=val;
+};
+window.addTableRow=(pid,bid)=>{
+  const p=state.pages.find(x=>x.id===pid);if(!p)return;
+  const b=p.blocks.find(x=>x.id===bid);if(b&&b.rows){b.rows.push(new Array(b.headers.length).fill(''));save();render();}
+};
+window.removeTableRow=(pid,bid,ri)=>{
+  const p=state.pages.find(x=>x.id===pid);if(!p)return;
+  const b=p.blocks.find(x=>x.id===bid);if(b&&b.rows&&b.rows.length>1){b.rows.splice(ri,1);save();render();}
+};
+window.addTableCol=(pid,bid)=>{
+  const p=state.pages.find(x=>x.id===pid);if(!p)return;
+  const b=p.blocks.find(x=>x.id===bid);if(b){
+    b.headers.push('Column '+ (b.headers.length+1));
+    b.rows.forEach(r=>r.push(''));
+    save();render();
   }
 };
-document.addEventListener('click',()=>{
-  if(state.blockMenu){state.blockMenu=null;const m=document.getElementById('block-menu-popup');if(m)m.remove();}
-});
-window.addBlock=(pid,type)=>{
-  const page=state.pages.find(p=>p.id===pid);if(!page)return;
-  state.blockMenu=null;const m=document.getElementById('block-menu-popup');if(m)m.remove();
-  let block;
-  if(type==='text')block={id:uid(),type:'text',content:''};
-  else if(type.startsWith('heading'))block={id:uid(),type:'heading',level:type.split('-')[1],content:''};
-  else if(type==='table')block={id:uid(),type:'table',headers:['Column 1','Column 2'],rows:[['',''],['','']]};
-  else if(type==='image')block={id:uid(),type:'image',src:null,caption:''};
-  page.blocks.push(block);save();render();
-  setTimeout(()=>{const el=document.getElementById('blk-'+block.id);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});const inp=el.querySelector('input,textarea');if(inp)inp.focus();}},80);
+window.removeTableCol=(pid,bid)=>{
+  const p=state.pages.find(x=>x.id===pid);if(!p)return;
+  const b=p.blocks.find(x=>x.id===bid);if(b&&b.headers.length>1){
+    b.headers.pop();b.rows.forEach(r=>r.pop());save();render();
+  }
 };
-window.deleteBlock=(pid,bid)=>{const p=state.pages.find(p=>p.id===pid);if(p){p.blocks=p.blocks.filter(b=>b.id!==bid);save();render();}};
+
+window.deleteBlock=(pid,bid)=>{
+  const p=state.pages.find(x=>x.id===pid);if(!p)return;
+  p.blocks=p.blocks.filter(b=>b.id!==bid);save();render();
+};
 window.moveBlock=(pid,bid,dir)=>{
-  const p=state.pages.find(p=>p.id===pid);if(!p)return;
-  const i=p.blocks.findIndex(b=>b.id===bid),ni=i+dir;
-  if(ni<0||ni>=p.blocks.length)return;
-  [p.blocks[i],p.blocks[ni]]=[p.blocks[ni],p.blocks[i]];save();render();
+  const p=state.pages.find(x=>x.id===pid);if(!p)return;
+  const idx=p.blocks.findIndex(b=>b.id===bid);if(idx===-1)return;
+  const nIdx=idx+dir;if(nIdx<0||nIdx>=p.blocks.length)return;
+  const temp=p.blocks[idx];p.blocks[idx]=p.blocks[nIdx];p.blocks[nIdx]=temp;
+  save();render();
 };
-window.updateBlock=(pid,bid,key,val)=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b)b[key]=val;};
-window.autoResize=el=>{el.style.height='auto';el.style.height=el.scrollHeight+'px';};
-window.updateTableHeader=(pid,bid,ci,val)=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b)b.headers[ci]=val;};
-window.updateTableCell=(pid,bid,ri,ci,val)=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b){if(!b.rows[ri])b.rows[ri]=[];b.rows[ri][ci]=val;}};
-window.addTableRow=(pid,bid)=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b){b.rows.push(new Array(b.headers.length).fill(''));save();render();}};
-window.removeTableRow=(pid,bid,ri)=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b){b.rows.splice(ri,1);save();render();}};
-window.addTableCol=(pid,bid)=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b){b.headers.push('Column '+(b.headers.length+1));b.rows.forEach(r=>r.push(''));save();render();}};
-window.removeTableCol=(pid,bid)=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b&&b.headers.length>1){b.headers.pop();b.rows.forEach(r=>r.pop());save();render();}};
-window.triggerImageUpload=(pid,bid)=>{document.getElementById('img-inp-'+bid)?.click();};
+
+window.triggerImageUpload=(pid,bid)=>{
+  const el=document.getElementById(`img-inp-${bid}`);if(el)el.click();
+};
 window.handleImageFile=(e,pid,bid)=>{
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b){b.src=ev.target.result;save();render();}};
-  reader.readAsDataURL(file);
+  const file=e.target.files[0];if(file)processImage(file,pid,bid);
 };
 window.handleImageDrop=(e,pid,bid)=>{
-  e.preventDefault();const file=e.dataTransfer.files[0];if(!file||!file.type.startsWith('image/'))return;
-  const reader=new FileReader();
-  reader.onload=ev=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b){b.src=ev.target.result;save();render();}};
-  reader.readAsDataURL(file);
+  e.preventDefault();const file=e.dataTransfer.files[0];if(file)processImage(file,pid,bid);
 };
-window.removeImageSrc=(pid,bid)=>{const p=state.pages.find(p=>p.id===pid);const b=p?.blocks.find(b=>b.id===bid);if(b){b.src=null;save();render();}};
+function processImage(file,pid,bid){
+  const r=new FileReader();
+  r.onload=(event)=>{
+    const p=state.pages.find(x=>x.id===pid);if(!p)return;
+    const b=p.blocks.find(x=>x.id===bid);if(b){b.src=event.target.result;save();render();}
+  };
+  r.readAsDataURL(file);
+}
+window.removeImageSrc=(pid,bid)=>{
+  const p=state.pages.find(x=>x.id===pid);if(!p)return;
+  const b=p.blocks.find(x=>x.id===bid);if(b){b.src='';b.caption='';save();render();}
+};
 
-// ---- PRODUCTION ----
+// ---- PRODUCTION VIEW ----
 function renderProduction(){
-  const allTasks=state.milestones.flatMap(m=>m.tasks);
+  let allTasks = [];
+  state.milestones.forEach(m=>{ m.tasks.forEach(t=>{ allTasks.push({...t, milestoneTitle:m.title, milestoneId:m.id}); }); });
   return `<div class="production">
-  <div class="prod-header">
-    <div class="prod-title">PRODUCTION</div>
-    <button class="btn btn-gold" onclick="openAddMilestoneModal()">+ Milestone</button>
-  </div>
-  <div class="prod-tabs">
-    <button class="prod-tab ${state.productionTab==='milestones'?'active':''}" onclick="setProdTab('milestones')">MILESTONES</button>
-    <button class="prod-tab ${state.productionTab==='kanban'?'active':''}" onclick="setProdTab('kanban')">KANBAN</button>
-    <button class="prod-tab ${state.productionTab==='all'?'active':''}" onclick="setProdTab('all')">ALL TASKS</button>
-  </div>
-  ${state.productionTab==='milestones'?renderMilestones():''}
-  ${state.productionTab==='kanban'?renderKanban(allTasks):''}
-  ${state.productionTab==='all'?renderAllTasks(allTasks):''}
-</div>`;
+    <div class="prod-header">
+      <div class="prod-title">PRODUCTION</div>
+      <button class="btn btn-gold" onclick="openAddMilestoneModal()">+ Milestone</button>
+    </div>
+    <div class="prod-tabs">
+      <button class="prod-tab ${state.productionTab==='milestones'?'active':''}" onclick="setProdTab('milestones')">MILESTONES</button>
+      <button class="prod-tab ${state.productionTab==='kanban'?'active':''}" onclick="setProdTab('kanban')">KANBAN</button>
+      <button class="prod-tab ${state.productionTab==='all'?'active':''}" onclick="setProdTab('all')">ALL TASKS</button>
+    </div>
+    ${state.productionTab==='milestones'?renderMilestones():''}
+    ${state.productionTab==='kanban'?renderKanban(allTasks):''}
+    ${state.productionTab==='all'?renderAllTasks(allTasks):''}
+  </div>`;
 }
 window.setProdTab=t=>{state.productionTab=t;render();};
+
 function getMilestoneProgress(m){if(!m.tasks.length)return 0;return Math.round(m.tasks.filter(t=>t.status==='done').length/m.tasks.length*100);}
+
 function renderMilestones(){
   const isOwner=state.auth.role==='owner';
   const canEdit=isOwner||state.auth.role==='editor';
@@ -731,126 +856,136 @@ function renderMilestones(){
     const pct=getMilestoneProgress(m);
     const exp=state.expandedMilestones[m.id];
     return `<div class="milestone-card">
-    <div class="milestone-header" onclick="toggleMilestone('${m.id}')">
-      <span style="font-size:12px;color:var(--text3);margin-right:4px">${exp?'▾':'▸'}</span>
-      <span class="m-name">${esc(m.title)}</span>
-      <div class="m-progress">
-        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-        <span class="m-pct">${pct}%</span>
+      <div class="milestone-header" onclick="toggleMilestone('${m.id}')">
+        <span style="font-size:12px;color:var(--text3);margin-right:4px">${exp?'▾':'▸'}</span>
+        <span class="m-name">${esc(m.title)}</span>
+        <div class="m-progress">
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+          <span class="m-pct">${pct}%</span>
+        </div>
+        <span class="m-status-badge badge-${m.status==='done'?'done':m.status==='active'?'active':m.status==='blocked'?'blocked':'pending'}">${m.status.toUpperCase()}</span>
+        ${isOwner?`<select onclick="event.stopPropagation()" onchange="updateMilestoneStatus('${m.id}',this.value)" style="margin-left:8px;background:var(--bg4);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-size:11px;padding:2px 4px;font-family:JetBrains Mono,monospace;outline:none">
+          <option value="pending" ${m.status==='pending'?'selected':''}>Pending</option>
+          <option value="active" ${m.status==='active'?'selected':''}>Active</option>
+          <option value="done" ${m.status==='done'?'selected':''}>Done</option>
+          <option value="blocked" ${m.status==='blocked'?'selected':''}>Blocked</option>
+        </select>
+        <button onclick="event.stopPropagation();deleteMilestone('${m.id}')" style="background:transparent;border:none;cursor:pointer;color:var(--text3);padding:2px 8px;font-size:14px" title="Delete">✕</button>`:''}
       </div>
-      <span class="m-status-badge badge-${m.status==='done'?'done':m.status==='active'?'active':m.status==='blocked'?'blocked':'pending'}">${m.status.toUpperCase()}</span>
-      ${isOwner?`<select onclick="event.stopPropagation()" onchange="updateMilestoneStatus('${m.id}',this.value)" style="margin-left:8px;background:var(--bg4);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-size:11px;padding:2px 4px;font-family:JetBrains Mono,monospace;outline:none">
-        <option value="pending" ${m.status==='pending'?'selected':''}>Pending</option>
-        <option value="active" ${m.status==='active'?'selected':''}>Active</option>
-        <option value="done" ${m.status==='done'?'selected':''}>Done</option>
-        <option value="blocked" ${m.status==='blocked'?'selected':''}>Blocked</option>
-      </select>
-      <button onclick="event.stopPropagation();deleteMilestone('${m.id}')" style="background:transparent;border:none;cursor:pointer;color:var(--text3);padding:2px 8px;font-size:14px" title="Delete">✕</button>`:''}
-    </div>
-    ${exp?`<div class="tasks-container">
-      ${m.tasks.map(t=>renderTaskRow(t,m.id,canEdit)).join('')}
-      ${canEdit?`<div class="add-task-row">
-        <input class="add-task-input" placeholder="+ Add task… (press Enter)" onkeydown="if(event.key==='Enter'&&this.value.trim()){addTask('${m.id}',this.value.trim());this.value='';}"/>
+      ${exp?`<div class="tasks-container">
+        ${m.tasks.map(t=>renderTaskRow(t,m.id,canEdit)).join('')}
+        ${canEdit?`<div class="add-task-row">
+          <input class="add-task-input" placeholder="+ Add task… (press Enter)" onkeydown="if(event.key==='Enter'&&this.value.trim()){addTask('${m.id}',this.value.trim());this.value='';}"/>
+        </div>`:''}
       </div>`:''}
-    </div>`:''}
-  </div>`;
-  }).join('')+
-  `<button class="add-milestone-btn" onclick="openAddMilestoneModal()">+ ADD MILESTONE</button>`;
+    </div>`;
+  }).join('')+ `<button class="add-milestone-btn" onclick="openAddMilestoneModal()">+ ADD MILESTONE</button>`;
 }
+
 const STATUS_COLORS={todo:'var(--text3)',inprog:'var(--gold)',review:'var(--blue)',done:'var(--green)',blocked:'var(--red)'};
+
 function renderTaskRow(t,mid,canEdit){
   return `<div class="task-row">
-  <div style="width:8px;height:8px;border-radius:50%;background:${STATUS_COLORS[t.status]||'var(--text3)'};flex-shrink:0"></div>
-  <div class="task-name"><input value="${esc(t.name)}" ${canEdit?'':'readonly'} oninput="updateTask('${mid}','${t.id}','name',this.value)" onblur="save()"/></div>
-  <div class="task-assignee"><select ${canEdit?'':'disabled'} onchange="updateTask('${mid}','${t.id}','assignee',this.value);save()">
-    ${state.users.map(u=>`<option value="${u.id}" ${t.assignee===u.id?'selected':''}>${esc(u.name)}</option>`).join('')}
-  </select></div>
-  <div class="task-status"><select ${canEdit?'':'disabled'} style="color:${STATUS_COLORS[t.status]||'var(--text3)'}" onchange="updateTask('${mid}','${t.id}','status',this.value);this.style.color=({'todo':'var(--text3)','inprog':'var(--gold)','review':'var(--blue)','done':'var(--green)','blocked':'var(--red)'})[this.value];save()">
-    <option value="todo" ${t.status==='todo'?'selected':''}>TODO</option>
-    <option value="inprog" ${t.status==='inprog'?'selected':''}>IN PROG</option>
-    <option value="review" ${t.status==='review'?'selected':''}>REVIEW</option>
-    <option value="done" ${t.status==='done'?'selected':''}>DONE</option>
-    <option value="blocked" ${t.status==='blocked'?'selected':''}>BLOCKED</option>
-  </select></div>
-  ${canEdit?`<button class="task-del" onclick="deleteTask('${mid}','${t.id}')">✕</button>`:''}
-</div>`;
+    <div style="width:8px;height:8px;border-radius:50%;background:${STATUS_COLORS[t.status]||'var(--text3)'};flex-shrink:0"></div>
+    <div class="task-name"><input value="${esc(t.name)}" ${canEdit?'':'readonly'} oninput="updateTask('${mid}','${t.id}','name',this.value)" onblur="save()"/></div>
+    <div class="task-assignee"><select ${canEdit?'':'disabled'} onchange="updateTask('${mid}','${t.id}','assignee',this.value);save()">
+      ${state.users.map(u=>`<option value="${u.id}" ${t.assignee===u.id?'selected':''}>${esc(u.name)}</option>`).join('')}
+    </select></div>
+    <div class="task-status"><select ${canEdit?'':'disabled'} style="color:${STATUS_COLORS[t.status]||'var(--text3)'}" onchange="updateTask('${mid}','${t.id}','status',this.value);this.style.color=({'todo':'var(--text3)','inprog':'var(--gold)','review':'var(--blue)','done':'var(--green)','blocked':'var(--red)'})[this.value];save();render();">
+      <option value="todo" style="color:var(--text3)" ${t.status==='todo'?'selected':''}>TODO</option>
+      <option value="inprog" style="color:var(--gold)" ${t.status==='inprog'?'selected':''}>IN PROGRESS</option>
+      <option value="review" style="color:var(--blue)" ${t.status==='review'?'selected':''}>REVIEW</option>
+      <option value="done" style="color:var(--green)" ${t.status==='done'?'selected':''}>DONE</option>
+      <option value="blocked" style="color:var(--red)" ${t.status==='blocked'?'selected':''}>BLOCKED</option>
+    </select></div>
+    ${canEdit?`<button class="task-del" onclick="deleteTask('${mid}','${t.id}')">✕</button>`:''}
+  </div>`;
 }
-function renderKanban(allTasks){
-  const cols=[{key:'todo',label:'TO DO',cls:'col-todo'},{key:'inprog',label:'IN PROGRESS',cls:'col-inprog'},{key:'review',label:'REVIEW',cls:'col-review'},{key:'done',label:'DONE',cls:'col-done'},{key:'blocked',label:'BLOCKED',cls:'col-blocked'}];
-  return `<div class="kanban">${cols.map(c=>{
-    const tasks=allTasks.filter(t=>t.status===c.key);
-    return `<div class="kanban-col">
-      <div class="kanban-col-header"><span>${c.label}</span><span style="color:var(--gold)">${tasks.length}</span></div>
-      <div class="kanban-cards">${tasks.map(t=>{
-        const m=state.milestones.find(m=>m.tasks.some(tt=>tt.id===t.id));
-        const assignee=state.users.find(u=>u.id===t.assignee);
-        return `<div class="kanban-card ${c.cls}"><div class="kc-name">${esc(t.name)}</div><div class="kc-meta">${m?esc(m.title.slice(0,18)):''} · ${assignee?assignee.initials:'?'}</div></div>`;
-      }).join('')}</div>
-    </div>`;}).join('')}</div>`;
-}
-function renderAllTasks(allTasks){
-  const canEdit=state.auth.role==='owner'||state.auth.role==='editor';
-  return `<div style="display:flex;flex-direction:column;gap:6px">${allTasks.map(t=>{const m=state.milestones.find(m=>m.tasks.some(tt=>tt.id===t.id));return renderTaskRow(t,m.id,canEdit);}).join('')}</div>`;
-}
-window.toggleMilestone=id=>{state.expandedMilestones[id]=!state.expandedMilestones[id];render();};
-window.updateMilestoneStatus=(mid,val)=>{const m=state.milestones.find(m=>m.id===mid);if(m){m.status=val;save();render();}};
-window.deleteMilestone=mid=>{if(!confirm('Delete this milestone and all its tasks?'))return;state.milestones=state.milestones.filter(m=>m.id!==mid);save();render();};
-window.addTask=(mid,name)=>{const m=state.milestones.find(m=>m.id===mid);if(m){m.tasks.push({id:uid(),name,assignee:state.auth.id,status:'todo'});save();render();}};
-window.updateTask=(mid,tid,key,val)=>{const m=state.milestones.find(m=>m.id===mid);const t=m?.tasks.find(t=>t.id===tid);if(t)t[key]=val;};
-window.deleteTask=(mid,tid)=>{const m=state.milestones.find(m=>m.id===mid);if(m){m.tasks=m.tasks.filter(t=>t.id!==tid);save();render();}};
-window.openAddMilestoneModal=()=>{state.modal={type:'milestone'};render();};
 
-// ---- PERMISSIONS ----
+window.toggleMilestone=(id)=>{ state.expandedMilestones[id]=!state.expandedMilestones[id];render(); };
+window.updateMilestoneStatus=(id,val)=>{ const m=state.milestones.find(x=>x.id===id);if(m)m.status=val;save();render(); };
+window.deleteMilestone=(id)=>{ if(confirm('Delete milestone and all its grouped tasks?')){state.milestones=state.milestones.filter(x=>x.id!==id);save();render();} };
+window.addTask=(mid,name)=>{ const m=state.milestones.find(x=>x.id===mid);if(m){m.tasks.push({id:uid(),name,assignee:state.auth.id,status:'todo'});save();render();} };
+window.updateTask=(mid,tid,field,val)=>{ const m=state.milestones.find(x=>x.id===mid);if(m){const t=m.tasks.find(x=>x.id===tid);if(t)t[field]=val;} };
+window.deleteTask=(mid,tid)=>{ const m=state.milestones.find(x=>x.id===mid);if(m){m.tasks=m.tasks.filter(x=>x.id!==tid);save();render();} };
+
+function renderKanban(tasks){
+  const cols = {todo:[],inprog:[],review:[],done:[],blocked:[]};
+  tasks.forEach(t=> {if(cols[t.status])cols[t.status].push(t);});
+  const renderCol=(key,label)=>{
+    return `<div class="kanban-col">
+      <div class="kanban-col-header"><span>${label}</span><span style="color:var(--text2)">${cols[key].length}</span></div>
+      <div class="kanban-cards">
+        ${cols[key].map(t=>`
+          <div class="kanban-card col-${key}">
+            <div class="kc-name">${esc(t.name)}</div>
+            <div class="kc-meta">${esc((state.users.find(u=>u.id===t.assignee)||{}).name||'Unassigned')} • <span style="font-size:9px;color:var(--gold2)">${esc(t.milestoneTitle)}</span></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+  };
+  return `<div class="kanban">
+    ${renderCol('todo','TODO')}
+    ${renderCol('inprog','IN PRODUCTION')}
+    ${renderCol('review','REVIEW')}
+    ${renderCol('done','COMPLETED')}
+    ${renderCol('blocked','BLOCKED')}
+  </div>`;
+}
+
+function renderAllTasks(tasks){
+  return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-top:16px;overflow:hidden">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;text-align:left">
+      <thead><tr style="background:var(--bg3);color:var(--gold);border-bottom:1px solid var(--border)"><th style="padding:10px 14px">TASK NAME</th><th style="padding:10px 14px">MILESTONE</th><th style="padding:10px 14px">ASSIGNEE</th><th style="padding:10px 14px">STATUS</th></tr></thead>
+      <tbody>
+        ${tasks.map(t=>`<tr style="border-bottom:1px solid var(--border);background:var(--bg2)"><td style="padding:10px 14px;color:var(--text)">${esc(t.name)}</td><td style="padding:10px 14px;color:var(--text2)">${esc(t.milestoneTitle)}</td><td style="padding:10px 14px;color:var(--text2)">${esc((state.users.find(u=>u.id===t.assignee)||{}).name||'')}</td><td style="padding:10px 14px"><span class="m-status-badge badge-${t.status}">${t.status.toUpperCase()}</span></td></tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+// ---- TEAM & ACCESS VIEW ----
 function renderPermissions(){
   return `<div class="permissions-panel">
-  <div class="perm-title">TEAM & ACCESS</div>
-  <p style="font-size:14px;color:var(--text2);margin-bottom:20px">Manage who can access and edit this GDD. Only owners can invite team members.</p>
-  <div class="divider"></div>
-  <div style="font-family:Cinzel,serif;font-size:11px;letter-spacing:0.15em;color:var(--text3);margin-bottom:12px">INVITE MEMBER</div>
-  <div class="perm-invite-row">
-    <input id="inv-name" placeholder="Name" style="max-width:130px"/>
-    <input id="inv-email" placeholder="Email address"/>
-    <select id="inv-role"><option value="editor">Editor</option><option value="viewer">Viewer</option></select>
-    <button class="btn btn-gold" onclick="sendInvite()">Invite</button>
-  </div>
-  <div id="inv-msg" style="font-size:12px;margin-bottom:16px;min-height:18px"></div>
-  <div class="divider"></div>
-  <div style="font-family:Cinzel,serif;font-size:11px;letter-spacing:0.15em;color:var(--text3);margin-bottom:12px">TEAM MEMBERS</div>
-  <div class="perm-user-list">
-    ${state.users.map(u=>`<div class="perm-user">
-      <div class="perm-user-avatar" style="background:${u.color};color:${u.role==='owner'?'#0d0d0f':'#fff'}">${u.initials}</div>
-      <div class="perm-user-info">
-        <div class="perm-user-name">${esc(u.name)}</div>
-        ${u.title?`<div style="font-size:12px;color:var(--text2);margin-top:4px">${esc(u.title)}</div>`:''}
-        <div class="perm-user-role">${esc(u.email)}${u.inviteCode&&!u.activated?` · <span style="color:var(--gold);font-weight:500">Code: ${u.inviteCode}</span> <button class="btn btn-sm" onclick="copyInviteCode('${u.inviteCode}','${esc(u.name)}')">Copy</button>`:''}</div>
-      </div>
-      <span class="perm-user-badge perm-badge-${u.role}">${u.role==='owner'?'DIRECTOR':u.role.toUpperCase()}</span>
-      ${u.role!=='owner'?`<select onchange="updateUserRole('${u.id}',this.value)" style="background:var(--bg4);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-size:11px;padding:2px 6px;font-family:JetBrains Mono,monospace;outline:none">
-        <option value="editor" ${u.role==='editor'?'selected':''}>Editor</option>
-        <option value="viewer" ${u.role==='viewer'?'selected':''}>Viewer</option>
-      </select>
-      <button class="btn btn-sm btn-danger" onclick="removeUser('${u.id}')">Remove</button>`:''}
-    </div>`).join('')}
-  </div>
-  <div class="divider"></div>
-  <div style="font-family:Cinzel,serif;font-size:11px;letter-spacing:0.15em;color:var(--text3);margin-bottom:12px">DEPARTMENTS</div>
-  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px">
-    ${state.departments.map(d=>`<div><div style="font-family:Cinzel,serif;font-weight:600;color:var(--gold)">${esc(d.name)}</div><div style="margin-left:6px;color:var(--text2)">${d.members.map(m=>esc(m)).join(', ')}</div></div>`).join('')}
-  </div>
-  <div class="divider"></div>
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px">
-    <div style="font-family:Cinzel,serif;font-size:10px;letter-spacing:0.15em;color:var(--text3);margin-bottom:10px">ROLE PERMISSIONS</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:13px">
-      <div style="font-family:Cinzel,serif;font-weight:600;color:var(--gold)">Director</div>
-      <div style="font-family:Cinzel,serif;font-weight:600;color:var(--blue)">Editor</div>
-      <div style="font-family:Cinzel,serif;font-weight:600;color:var(--text3)">Viewer</div>
-      <div style="color:var(--text2)">Full control</div><div style="color:var(--text2)">Edit pages & tasks</div><div style="color:var(--text2)">Read only</div>
-      <div style="color:var(--text2)">Invite users</div><div style="color:var(--text2)">Add/delete blocks</div><div style="color:var(--text2)">No editing</div>
-      <div style="color:var(--text2)">Manage roles</div><div style="color:var(--text2)">Upload images</div><div style="color:var(--text2)">View production</div>
+    <div class="perm-title">TEAM REGISTRY & SYSTEM ACCESS</div>
+    <div class="perm-invite-row">
+      <input type="text" id="inv-name" placeholder="Team Member Full Name"/>
+      <input type="email" id="inv-email" placeholder="email@compass.studio"/>
+      <select id="inv-role"><option value="viewer">Viewer (Read Only)</option><option value="editor">Editor (Write Pages/Tasks)</option><option value="owner">Director (Full Admin Access)</option></select>
+      <button class="btn btn-gold" onclick="sendInvite()">Register Profile</button>
     </div>
-  </div>
-</div>`;
+    <div id="inv-msg" style="font-size:13px;margin:-14px 0 20px"></div>
+    <div class="perm-user-list">
+      ${state.users.map(u=>`
+        <div class="perm-user">
+          <div class="perm-user-avatar" style="background:${u.color||'var(--border2)'};color:${u.color?'#0d0d0f':'var(--text)'}">${u.initials||'?'}</div>
+          <div class="perm-user-info">
+            <div class="perm-user-name">${esc(u.name)} ${u.id===state.auth.id?'<span style="color:var(--gold);font-size:11px">(You)</span>':''}</div>
+            <div class="perm-user-role">${esc(u.email)} ${u.title?`• ${esc(u.title)}`:''}</div>
+          </div>
+          <div>
+            ${u.role==='owner'?`<span class="perm-user-badge perm-badge-owner">DIRECTOR</span>`:u.role==='editor'?`<span class="perm-user-badge perm-badge-editor">EDITOR</span>`:`<span class="perm-user-badge perm-badge-viewer">VIEWER</span>`}
+          </div>
+          <div style="font-family:JetBrains Mono;font-size:11px;color:var(--text3);margin-left:12px">
+            ${u.inviteCode?`KEY: <span style="color:var(--amber)">${u.inviteCode}</span> [${u.activated?'ACTIVE':'PENDING'}]`:'SYS_ROOT'}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="divider"></div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:20px">
+      <div style="font-family:Cinzel;font-size:12px;color:var(--gold);margin-bottom:12px;letter-spacing:0.05em">SECURITY ROLES DEFINITION</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:13px">
+        <div style="font-family:Cinzel,serif;font-weight:600;color:var(--gold)">Director</div><div style="font-family:Cinzel,serif;font-weight:600;color:var(--blue)">Editor</div><div style="font-family:Cinzel,serif;font-weight:600;color:var(--text3)">Viewer</div>
+        <div style="color:var(--text2)">Full control</div><div style="color:var(--text2)">Edit pages & tasks</div><div style="color:var(--text2)">Read only</div>
+        <div style="color:var(--text2)">Invite users</div><div style="color:var(--text2)">Add/delete blocks</div><div style="color:var(--text2)">No editing</div>
+        <div style="color:var(--text2)">Manage roles</div><div style="color:var(--text2)">Upload images</div><div style="color:var(--text2)">View production</div>
+      </div>
+    </div>
+  </div>`;
 }
+
 window.sendInvite=()=>{
   const name=document.getElementById('inv-name').value.trim();
   const email=document.getElementById('inv-email').value.trim().toLowerCase();
@@ -862,34 +997,16 @@ window.sendInvite=()=>{
   const initials=name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
   const colors=['#4c7ec9','#4c9c6a','#c98a4c','#7c4cc9','#c94c7c'];
   const color=colors[Math.floor(Math.random()*colors.length)];
-  state.users.push({id:uid(),name,email,role,color,initials,inviteCode:code,activated:false});
-  save();
-  msg.innerHTML=`✦ Invite created! Share this code with <b>${esc(name)}</b>: <span style="font-family:JetBrains Mono,monospace;background:var(--bg4);padding:2px 8px;border-radius:3px;color:var(--gold)">${code}</span>`;
-  msg.style.color='var(--green)';
-  document.getElementById('inv-name').value='';document.getElementById('inv-email').value='';
-
-  setTimeout(()=>{const ul=document.querySelector('.perm-user-list');if(ul)ul.innerHTML=state.users.map(u=>`<div class="perm-user"><div class="perm-user-avatar" style="background:${u.color};color:${u.role==='owner'?'#0d0d0f':'#fff'}">${u.initials}</div><div class="perm-user-info"><div class="perm-user-name">${esc(u.name)}</div><div class="perm-user-role">${esc(u.email)}${u.inviteCode&&!u.activated?` · <span style="color:var(--gold)">Code: ${u.inviteCode}</span> <button class="btn btn-sm" onclick="copyInviteCode('${u.inviteCode}','${esc(u.name)}')">Copy</button>`:''}</div></div><span class="perm-user-badge perm-badge-${u.role}">${u.role==='owner'?'DIRECTOR':u.role.toUpperCase()}</span>${u.role!=='owner'?`<button class="btn btn-sm btn-danger" onclick="removeUser('${u.id}')">Remove</button>`:''}</div>`).join('');},50);
-};
-window.updateUserRole=(uid_,role)=>{const u=state.users.find(u=>u.id===uid_);if(u){u.role=role;save();}};
-window.removeUser=uid_=>{if(!confirm('Remove this user?'))return;state.users=state.users.filter(u=>u.id!==uid_);save();render();};
-
-window.copyInviteCode=(code,name)=>{
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(code).then(()=>{
-      const msg=document.getElementById('inv-msg');
-      if(msg){msg.innerHTML=`Copied <b>${esc(code)}</b> for ${esc(name)}`;msg.style.color='var(--green)';setTimeout(()=>{msg.textContent='';},2500);}    
-    }).catch(()=>{alert('Copy failed');});
-  }else{
-    const ta=document.createElement('textarea');ta.value=code;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');const msg=document.getElementById('inv-msg');if(msg){msg.innerHTML=`Copied <b>${esc(code)}</b> for ${esc(name)}`;msg.style.color='var(--green)';setTimeout(()=>{msg.textContent='';},2500);} }catch(e){alert('Copy failed');}ta.remove();
-  }
+  state.users.push({id:'u_'+uid(),name,email,role,color,initials,inviteCode:code,activated:false});
+  save();render();
+  const out=document.getElementById('inv-msg');
+  out.textContent=`Registered! Assignment Key Code generated: ${code}`;out.style.color='var(--green)';
 };
 
-// ---- MODAL ----
+// ---- MODALS SYSTEM ----
 function renderModal(){
-  const m=state.modal;
-  if(m.type==='milestone'){
-    return `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
-    <div class="modal">
+  if(state.modal==='add-milestone'){
+    return `<div class="modal-overlay" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()">
       <div class="modal-title">NEW MILESTONE</div>
       <div class="modal-field"><label>TITLE</label><input id="m-title" placeholder="Milestone name" autofocus onkeydown="if(event.key==='Enter')confirmAddMilestone()"/></div>
       <div class="modal-field"><label>STATUS</label><select id="m-status">
@@ -907,6 +1024,7 @@ function renderModal(){
   return '';
 }
 window.closeModal=()=>{state.modal=null;render();};
+window.openAddMilestoneModal=()=>{state.modal='add-milestone';render();};
 window.confirmAddMilestone=()=>{
   const title=document.getElementById('m-title').value.trim();
   const status=document.getElementById('m-status').value;
@@ -921,13 +1039,17 @@ window.confirmAddMilestone=()=>{
 function bindApp(){
   document.querySelectorAll('textarea').forEach(el=>{
     el.style.height='auto';el.style.height=el.scrollHeight+'px';
-    el.addEventListener('input',()=>autoResize(el));
   });
+  window.autoResize=(target)=>{
+    target.style.height='auto';target.style.height=target.scrollHeight+'px';
+  };
 }
 
-// ---- INIT ----
+// Global click dismiss handler for block custom menu popup
+document.addEventListener('click',()=>{if(state.blockMenu){state.blockMenu=null;render();}});
+
+// ---- INITIAL SETUP ----
 load();
-if(!state.currentPageId&&state.pages.length)state.currentPageId=state.pages[0].id;
 render();
 </script>
 </body>
